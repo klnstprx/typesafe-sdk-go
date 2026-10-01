@@ -1,0 +1,147 @@
+[
+ {
+  "id": "error-types",
+  "kind": "normalize",
+  "summary": "Python raises one exception class per status; Go has one *APIError with StatusCode.",
+  "reason": "Go code inspects errors with errors.As and a status field rather than a class hierarchy. TypeSafeAPIResponseValidationError maps to *ResponseValidationError; every other TypeSafe*Error with a status maps to *APIError. Python exposes retry_after_ms only on TypeSafeRateLimitError, so Go's APIError.RetryAfter() is compared for 429 responses only."
+ },
+ {
+  "id": "absent-request-id",
+  "kind": "normalize",
+  "summary": "A missing x-typesafe-request-id is None (or raises) in Python and \"\" in Go.",
+  "reason": "Go accessors return the zero value instead of a sentinel or an exception, matching http.Header.Get."
+ },
+ {
+  "id": "usage-null-zero",
+  "kind": "normalize",
+  "summary": "Omitted or null token counts are None in Python and 0 in Go.",
+  "reason": "Usage.InputTokens and Usage.OutputTokens are plain ints by design (see the plan); the raw value stays available through RawJSON()."
+ },
+ {
+  "id": "client-error-wording",
+  "kind": "normalize",
+  "summary": "Client-side misuse errors follow Go conventions.",
+  "reason": "Go error strings start with \"typesafe: \", begin in lower case, and end without a period. Messages are compared after removing those differences; Python's exception classes (TypeSafeError, pydantic ValidationError) are not compared. Messages that differ in substance are listed in the client-error-messages override."
+ },
+ {
+  "id": "client-error-messages",
+  "kind": "override",
+  "summary": "Some client-side messages name Go types or options instead of Python ones.",
+  "reason": "Python's text refers to Python constructs (api_key=, dictionaries, pydantic validation); Go's names the Go equivalents. Both reject the input before any network I/O.",
+  "cases": {
+   "requests/raw no type": {"error": {"message": "question \"x\" must be a Noul, Choice, Score, or RawQuestion with a non-empty string \"type\""}},
+   "requests/raw empty type": {"error": {"message": "question \"x\" must be a Noul, Choice, Score, or RawQuestion with a non-empty string \"type\""}},
+   "requests/raw number type": {"error": {"message": "question \"x\" must be a Noul, Choice, Score, or RawQuestion with a non-empty string \"type\""}},
+   "requests/noul number instructions": {"error": {"message": "noul question \"q\" instructions must encode to a JSON string, object, or array"}},
+   "api_keys/\"\"": {"message": "no API key was provided; pass WithAPIKey or set the TYPESAFE_API_KEY environment variable"},
+   "api_keys/\"   \"": {"message": "no API key was provided; pass WithAPIKey or set the TYPESAFE_API_KEY environment variable"}
+  }
+ },
+ {
+  "id": "state-content-validated",
+  "kind": "override",
+  "summary": "Go rejects a state that does not encode to a JSON string, object, or array; Python sends it.",
+  "reason": "Python's JSONContent type hint is not enforced at runtime, so 5, None, and True reach the server, which rejects them. Go validates state at encode time (a v1 design decision) and fails before any network I/O.",
+  "cases": {
+   "requests/number state": {"ok": false, "request": null, "error": {"message": "state must encode to a JSON string, object, or array"}, "requests_sent": 0},
+   "requests/null state": {"ok": false, "request": null, "error": {"message": "state must encode to a JSON string, object, or array"}, "requests_sent": 0},
+   "requests/bool state": {"ok": false, "request": null, "error": {"message": "state must encode to a JSON string, object, or array"}, "requests_sent": 0}
+  }
+ },
+ {
+  "id": "noul-criteria-nil-omitted",
+  "kind": "override",
+  "summary": "A nil NoulCriteria outcome is omitted in Go; Python sends an explicit None as null.",
+  "reason": "Go's NoulCriteria fields are plain any values, so nil cannot distinguish \"absent\" from \"null\". Both forms leave the outcome undescribed according to the OpenAPI schema (default null).",
+  "cases": {
+   "requests/noul criteria explicit null": {"request": {"body": {"questions": {"q": {"criteria": {"true": null}}}}}}
+  }
+ },
+ {
+  "id": "get-content-type-protected",
+  "kind": "override",
+  "summary": "Go never sends a caller-supplied Content-Type; Python forwards it on GET requests.",
+  "reason": "Content-Type is a protected header in the Go SDK: it is application/json on requests with a body and absent otherwise (code review, P3).",
+  "cases": {
+   "requests/models headers": {"request": {"headers": {"content-type": null}}}
+  }
+ },
+ {
+  "id": "legend-union-path",
+  "kind": "override",
+  "summary": "An invalid legend description reports answers.<n>.legend.<k>; Python appends pydantic's union member name (\".str\").",
+  "reason": "The \".str\" suffix is an artifact of how pydantic reports union validation errors and names no field. Go reports the offending field, as the plan specifies.",
+  "cases": {
+   "responses/score legend number": {"error": {"field_path": "answers.s.legend.0", "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.legend.0'."}},
+   "responses/score legend bool": {"error": {"field_path": "answers.s.legend.0", "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.legend.0'."}},
+   "responses/score legend null": {"error": {"field_path": "answers.s.legend.0", "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.legend.0'."}}
+  }
+ },
+ {
+  "id": "non-finite-json",
+  "kind": "override",
+  "summary": "Go rejects NaN and Infinity literals in a response; Python accepts them.",
+  "reason": "pydantic-core parses these non-standard literals by default. They are not JSON (RFC 8259), and a NaN probability is meaningless, so Go fails closed with a validation error for the whole body.",
+  "cases": {
+   "responses/noul NaN literal": {
+    "ok": false, "result": null,
+    "error": {
+     "class": "ResponseValidationError", "status": 200, "request_id": "", "field_path": "",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at ''.",
+     "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"n\":{\"type\":\"noul\",\"noul\":NaN}}}"
+    }
+   }
+  }
+ },
+ {
+  "id": "token-count-range",
+  "kind": "override",
+  "summary": "Token counts beyond the int range are a validation error in Go; Python accepts arbitrary integers.",
+  "reason": "Usage fields are Go ints. Failing is safer than wrapping or truncating a count.",
+  "cases": {
+   "responses/usage token beyond int64": {
+    "ok": false, "result": null,
+    "error": {
+     "class": "ResponseValidationError", "status": 200, "request_id": "", "field_path": "usage.input_tokens",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'usage.input_tokens'.",
+     "body": {"model": "m", "usage": {"input_tokens": 100000000000000000000}, "answers": {}}
+    }
+   }
+  }
+ },
+ {
+  "id": "retry-after-duration-range",
+  "kind": "override",
+  "summary": "A server delay at or beyond time.Duration's range (about 292 years) is treated as absent in Go.",
+  "reason": "Go cannot represent the delay; ignoring it falls back to backoff, and the retry budget stops the call either way. Python keeps the float.",
+  "cases": {
+   "retry_after/{\"retry-after\": \"9223372036.9\"}": null
+  }
+ },
+ {
+  "id": "request-json-encoding",
+  "kind": "note",
+  "summary": "Request bodies are compared as parsed JSON, not bytes.",
+  "reason": "Go's encoding/json sorts map keys (questions, choice criteria, raw questions, and the body when WithExtraBody is used) and escapes U+2028 and U+2029; Python preserves insertion order. The server parses JSON, so both are equivalent."
+ },
+ {
+  "id": "header-name-case",
+  "kind": "note",
+  "summary": "Header names go out in Go's canonical form (X-Typesafe-Sdk) rather than Python's spelling (X-TypeSafe-SDK).",
+  "reason": "HTTP header names are case-insensitive; net/http canonicalizes them. Headers are compared case-insensitively."
+ },
+ {
+  "id": "sdk-identity-headers",
+  "kind": "note",
+  "summary": "User-Agent, X-TypeSafe-SDK, and X-TypeSafe-Runtime identify the Go SDK and runtime.",
+  "reason": "They name the implementation (typesafe-sdk-go/<version>, go/<version>) and are excluded from comparison along with headers added by the HTTP library."
+ },
+ {
+  "id": "go-only-behavior",
+  "kind": "note",
+  "summary": "Behavior with no Python counterpart is covered by Go tests, not this fixture.",
+  "reason": "Context cancellation, per-attempt timeouts, credential redaction of transport errors, never-followed redirects (including malformed Location headers), and silent-by-default logging are Go-specific designs."
+ }
+]

@@ -1,0 +1,4565 @@
+{
+ "api_key": "sk-parity-0123456789",
+ "api_keys": [
+  {
+   "key": " sk-padded ",
+   "name": "\" sk-padded \"",
+   "python": {
+    "ok": true
+   }
+  },
+  {
+   "key": "sk-valid~!@#$%^&*()",
+   "name": "\"sk-valid~!@#$%^&*()\"",
+   "python": {
+    "ok": true
+   }
+  },
+  {
+   "key": "",
+   "name": "\"\"",
+   "python": {
+    "message": "No API key was provided. Pass api_key or set the TYPESAFE_API_KEY environment variable.",
+    "ok": false
+   }
+  },
+  {
+   "key": "   ",
+   "name": "\"   \"",
+   "python": {
+    "message": "No API key was provided. Pass api_key or set the TYPESAFE_API_KEY environment variable.",
+    "ok": false
+   }
+  },
+  {
+   "key": "sk a",
+   "name": "\"sk a\"",
+   "python": {
+    "message": "API key must contain only printable ASCII characters without whitespace.",
+    "ok": false
+   }
+  },
+  {
+   "key": "sk\ta",
+   "name": "\"sk\\ta\"",
+   "python": {
+    "message": "API key must contain only printable ASCII characters without whitespace.",
+    "ok": false
+   }
+  },
+  {
+   "key": "ské",
+   "name": "\"sk\\u00e9\"",
+   "python": {
+    "message": "API key must contain only printable ASCII characters without whitespace.",
+    "ok": false
+   }
+  },
+  {
+   "key": "sk\u0001",
+   "name": "\"sk\\u0001\"",
+   "python": {
+    "message": "API key must contain only printable ASCII characters without whitespace.",
+    "ok": false
+   }
+  },
+  {
+   "key": "sk",
+   "name": "\"sk\\u007f\"",
+   "python": {
+    "message": "API key must contain only printable ASCII characters without whitespace.",
+    "ok": false
+   }
+  }
+ ],
+ "base_url": "https://api.test",
+ "generator": "testdata/parity/generate.py",
+ "ignored_request_headers": [
+  "accept-encoding",
+  "connection",
+  "content-length",
+  "host",
+  "user-agent",
+  "x-typesafe-runtime",
+  "x-typesafe-sdk"
+ ],
+ "python_sdk": {
+  "commit": "f078f1e208a0d885154dc758344ae4fce77ac168",
+  "version": "0.7.2"
+ },
+ "requests": [
+  {
+   "endpoint": "systemone",
+   "name": "text state",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": "hello"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": "hello"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "object state",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": {
+       "nested": {
+        "x": null
+       },
+       "subject": "dup",
+       "tags": [
+        null,
+        1,
+        "a"
+       ]
+      }
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": {
+    "nested": {
+     "x": null
+    },
+    "subject": "dup",
+    "tags": [
+     null,
+     1,
+     "a"
+    ]
+   }
+  },
+  {
+   "endpoint": "systemone",
+   "name": "array state",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": [
+       "a",
+       {
+        "b": 1
+       }
+      ]
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": [
+    "a",
+    {
+     "b": 1
+    }
+   ]
+  },
+  {
+   "endpoint": "systemone",
+   "name": "unicode state",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": "café ☕ <b>&"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": "café ☕ <b>&"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "number state",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": 5
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": 5
+  },
+  {
+   "endpoint": "systemone",
+   "name": "null state",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": null
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": null
+  },
+  {
+   "endpoint": "systemone",
+   "name": "bool state",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": true
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": true
+  },
+  {
+   "endpoint": "systemone",
+   "name": "noul empty",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "noul empty instructions",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "",
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "",
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "noul structured",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "criteria": {
+         "false": [
+          "no"
+         ],
+         "true": "yes"
+        },
+        "instructions": {
+         "n": null,
+         "task": "t"
+        },
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "criteria": {
+      "false": [
+       "no"
+      ],
+      "true": "yes"
+     },
+     "instructions": {
+      "n": null,
+      "task": "t"
+     },
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "noul criteria one side",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "criteria": {
+         "true": "yes"
+        },
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "criteria": {
+      "true": "yes"
+     },
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "noul criteria explicit null",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "criteria": {
+         "false": "no",
+         "true": null
+        },
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "criteria": {
+      "false": "no",
+      "true": null
+     },
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "noul number instructions",
+   "python": {
+    "error": {
+     "class": "ValidationError",
+     "message": "3 validation errors for Noul"
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "q": {
+     "instructions": 5,
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "choice",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "criteria": {
+         "angry": "upset",
+         "calm": null,
+         "x": {
+          "a": 1
+         }
+        },
+        "instructions": "Tone?",
+        "type": "choice"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "criteria": {
+      "angry": "upset",
+      "calm": null,
+      "x": {
+       "a": 1
+      }
+     },
+     "instructions": "Tone?",
+     "kind": "choice"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "choice empty criteria",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "criteria": {},
+        "type": "choice"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "criteria": {},
+     "kind": "choice"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "score",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "criteria": [
+         "low",
+         {
+          "level": "mid"
+         },
+         [
+          "high"
+         ]
+        ],
+        "instructions": "Urgency?",
+        "type": "score"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "criteria": [
+      "low",
+      {
+       "level": "mid"
+      },
+      [
+       "high"
+      ]
+     ],
+     "instructions": "Urgency?",
+     "kind": "score"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "score empty criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Score question \"urgency\" has no criteria; at least one score is required."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "urgency": {
+     "criteria": [],
+     "kind": "score"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "mixed questions",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "a": {
+        "criteria": [
+         "x"
+        ],
+        "type": "score"
+       },
+       "b": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       },
+       "c": {
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "a": {
+     "criteria": [
+      "x"
+     ],
+     "kind": "score"
+    },
+    "b": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    },
+    "c": {
+     "raw": {
+      "type": "noul"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "no questions",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "At least one question is required."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {},
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw verbatim",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "extra": [
+         null
+        ],
+        "instructions": 5,
+        "type": "future"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "raw": {
+      "extra": [
+       null
+      ],
+      "instructions": 5,
+      "type": "future"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw noul",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "?",
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "raw": {
+      "instructions": "?",
+      "type": "noul"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw no type",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Question \"x\" must be a question object or a dictionary with a nonempty string \"type\"."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "x": {
+     "raw": {
+      "instructions": "?"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw empty type",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Question \"x\" must be a question object or a dictionary with a nonempty string \"type\"."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "x": {
+     "raw": {
+      "type": ""
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw number type",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Question \"x\" must be a question object or a dictionary with a nonempty string \"type\"."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "x": {
+     "raw": {
+      "type": 1
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw choice no criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Question \"x\" requires \"criteria\"."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "x": {
+     "raw": {
+      "type": "choice"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw score no criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Question \"x\" requires \"criteria\"."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "x": {
+     "raw": {
+      "type": "score"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw score empty criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Score question \"u\" has no criteria; at least one score is required."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "u": {
+     "raw": {
+      "criteria": [],
+      "type": "score"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw score false criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Score question \"u\" has no criteria; at least one score is required."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "u": {
+     "raw": {
+      "criteria": false,
+      "type": "score"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw score zero criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Score question \"u\" has no criteria; at least one score is required."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "u": {
+     "raw": {
+      "criteria": 0,
+      "type": "score"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw score float zero criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Score question \"u\" has no criteria; at least one score is required."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "u": {
+     "raw": {
+      "criteria": 0.0,
+      "type": "score"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw score empty string criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Score question \"u\" has no criteria; at least one score is required."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "u": {
+     "raw": {
+      "criteria": "",
+      "type": "score"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw score empty object criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Score question \"u\" has no criteria; at least one score is required."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "u": {
+     "raw": {
+      "criteria": {},
+      "type": "score"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw score null criteria",
+   "python": {
+    "error": {
+     "class": "TypeSafeError",
+     "message": "Score question \"u\" has no criteria; at least one score is required."
+    },
+    "ok": false,
+    "requests_sent": 0
+   },
+   "questions": {
+    "u": {
+     "raw": {
+      "criteria": null,
+      "type": "score"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw score truthy criteria",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "u": {
+        "criteria": 1,
+        "type": "score"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "u": {
+     "raw": {
+      "criteria": 1,
+      "type": "score"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "name": "raw choice null criteria",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "u": {
+        "criteria": null,
+        "type": "choice"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "u": {
+     "raw": {
+      "criteria": null,
+      "type": "choice"
+     }
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "model": "jev-2",
+   "name": "model override",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-2",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "client_model": "jev-client",
+   "endpoint": "systemone",
+   "name": "client model",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-client",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "extra_body": {
+    "debug": true,
+    "model": "jev-extra",
+    "trace": null
+   },
+   "model": "jev-2",
+   "name": "extra body",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "debug": true,
+      "model": "jev-extra",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": "x",
+      "trace": null
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "endpoint": "systemone",
+   "extra_body": {
+    "state": {
+     "a": 1
+    }
+   },
+   "name": "extra body replaces state",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": {
+       "a": 1
+      }
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "client_headers": {
+    "Authorization": "Bearer stolen",
+    "X-Shared": "client",
+    "X-Team": "a",
+    "X-TypeSafe-Retry-Count": "99"
+   },
+   "endpoint": "systemone",
+   "headers": {
+    "Accept": "text/html",
+    "Content-Type": "text/plain",
+    "x-shared": "call",
+    "x-typesafe-retry-count": "7"
+   },
+   "name": "headers",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": {
+      "model": "jev-latest",
+      "questions": {
+       "q": {
+        "instructions": "Is this spam?",
+        "type": "noul"
+       }
+      },
+      "state": "x"
+     },
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "application/json",
+      "x-shared": "call",
+      "x-team": "a"
+     },
+     "method": "POST",
+     "path": "/v1/systemone"
+    }
+   },
+   "questions": {
+    "q": {
+     "instructions": "Is this spam?",
+     "kind": "noul"
+    }
+   },
+   "state": "x"
+  },
+  {
+   "client_headers": {
+    "Content-Type": "text/plain",
+    "X-Team": "a"
+   },
+   "endpoint": "models",
+   "headers": {
+    "Accept": "text/html"
+   },
+   "name": "models headers",
+   "python": {
+    "ok": true,
+    "request": {
+     "body": null,
+     "headers": {
+      "accept": "application/json",
+      "authorization": "Bearer sk-parity-0123456789",
+      "content-type": "text/plain",
+      "x-team": "a"
+     },
+     "method": "GET",
+     "path": "/v1/models"
+    }
+   }
+  }
+ ],
+ "responses": [
+  {
+   "body": "{\n      \"model\": \"jev-1\", \"usage\": {\"input_tokens\": 120, \"output_tokens\": 12, \"cached\": 3},\n      \"answers\": {\n        \"spam\": {\"type\": \"noul\", \"noul\": 0.98, \"extra\": true},\n        \"tone\": {\"type\": \"choice\", \"choice\": \"calm\", \"confidence\": 0.9, \"probabilities\": {\"calm\": 0.9, \"angry\": 0.1}},\n        \"urgency\": {\"type\": \"score\", \"score\": 1.7, \"confidence\": 0.8,\n                    \"legend\": {\"0\": \"low\", \"1\": {\"level\": \"mid\"}, \"2\": [\"high\", null]},\n                    \"probabilities\": {\"0\": 0.1, \"1\": 0.1, \"2\": 0.8}}\n      },\n      \"trace\": \"ignored\"}",
+   "endpoint": "systemone",
+   "headers": {
+    "x-typesafe-request-id": "req-1"
+   },
+   "name": "full",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {
+      "spam": {
+       "noul": 0.98,
+       "type": "noul"
+      },
+      "tone": {
+       "choice": "calm",
+       "confidence": 0.9,
+       "probabilities": {
+        "angry": 0.1,
+        "calm": 0.9
+       },
+       "type": "choice"
+      },
+      "urgency": {
+       "confidence": 0.8,
+       "legend": {
+        "0": "low",
+        "1": {
+         "level": "mid"
+        },
+        "2": [
+         "high",
+         null
+        ]
+       },
+       "probabilities": {
+        "0": 0.1,
+        "1": 0.1,
+        "2": 0.8
+       },
+       "score": 1.7,
+       "type": "score"
+      }
+     },
+     "groups": {
+      "choices": [
+       "tone"
+      ],
+      "nouls": [
+       "spam"
+      ],
+      "scores": [
+       "urgency"
+      ]
+     },
+     "model": "jev-1",
+     "request_id": "req-1",
+     "usage": {
+      "input_tokens": 120,
+      "output_tokens": 12
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"jev-1\",\"usage\":{\"input_tokens\":3,\"output_tokens\":1},\"answers\":{\"q\":{\"type\":\"noul\",\"noul\":0.5}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "no request id",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {
+      "q": {
+       "noul": 0.5,
+       "type": "noul"
+      }
+     },
+     "groups": {
+      "choices": [],
+      "nouls": [
+       "q"
+      ],
+      "scores": []
+     },
+     "model": "jev-1",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 3,
+      "output_tokens": 1
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"jev-1\",\"usage\":{\"input_tokens\":3,\"output_tokens\":1},\"answers\":{\"q\":{\"type\":\"noul\",\"noul\":0.5}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "status 201",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {
+      "q": {
+       "noul": 0.5,
+       "type": "noul"
+      }
+     },
+     "groups": {
+      "choices": [],
+      "nouls": [
+       "q"
+      ],
+      "scores": []
+     },
+     "model": "jev-1",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 3,
+      "output_tokens": 1
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 201
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"n\":{\"type\":\"noul\",\"noul\":1},\"c\":{\"type\":\"choice\",\"choice\":\"a\",\"confidence\":1,\"probabilities\":{\"a\":1}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "integers for floats",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {
+      "c": {
+       "choice": "a",
+       "confidence": 1.0,
+       "probabilities": {
+        "a": 1.0
+       },
+       "type": "choice"
+      },
+      "n": {
+       "noul": 1.0,
+       "type": "noul"
+      }
+     },
+     "groups": {
+      "choices": [
+       "c"
+      ],
+      "nouls": [
+       "n"
+      ],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"n\":{\"type\":\"noul\",\"noul\":0},\"s\":{\"type\":\"score\",\"score\":0,\"confidence\":0,\"legend\":{},\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "zero values",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {
+      "n": {
+       "noul": 0.0,
+       "type": "noul"
+      },
+      "s": {
+       "confidence": 0.0,
+       "legend": {},
+       "probabilities": {},
+       "score": 0.0,
+       "type": "score"
+      }
+     },
+     "groups": {
+      "choices": [],
+      "nouls": [
+       "n"
+      ],
+      "scores": [
+       "s"
+      ]
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"s\":{\"type\":\"score\",\"score\":1,\"confidence\":1,\"legend\":{\"-1\":\"x\"},\"probabilities\":{\"-1\":1}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "negative legend key",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {
+      "s": {
+       "confidence": 1.0,
+       "legend": {
+        "-1": "x"
+       },
+       "probabilities": {
+        "-1": 1.0
+       },
+       "score": 1.0,
+       "type": "score"
+      }
+     },
+     "groups": {
+      "choices": [],
+      "nouls": [],
+      "scores": [
+       "s"
+      ]
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "answers absent",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {},
+     "groups": {
+      "choices": [],
+      "nouls": [],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "answers empty",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {},
+     "groups": {
+      "choices": [],
+      "nouls": [],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{},\"answers\":{}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage empty",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {},
+     "groups": {
+      "choices": [],
+      "nouls": [],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": null,
+      "output_tokens": null
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":null,\"output_tokens\":null},\"answers\":{}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage nulls",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {},
+     "groups": {
+      "choices": [],
+      "nouls": [],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": null,
+      "output_tokens": null
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"r\":{\"type\":\"ranking\",\"order\":[1,2]}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "unknown type only",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {},
+     "groups": {
+      "choices": [],
+      "nouls": [],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2
+     }
+    },
+    "unknown_answers": [
+     [
+      "r",
+      "ranking"
+     ]
+    ]
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"r\":{\"type\":\"ranking\"},\"n\":{\"type\":\"noul\",\"noul\":0.1},\"x\":{\"type\":\"essay\"}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "unknown type mixed",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {
+      "n": {
+       "noul": 0.1,
+       "type": "noul"
+      }
+     },
+     "groups": {
+      "choices": [],
+      "nouls": [
+       "n"
+      ],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2
+     }
+    },
+    "unknown_answers": [
+     [
+      "r",
+      "ranking"
+     ],
+     [
+      "x",
+      "essay"
+     ]
+    ]
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"r\":{\"type\":\"ranking\",\"noul\":\"not a number\"}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "unknown type skips validation",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {},
+     "groups": {
+      "choices": [],
+      "nouls": [],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2
+     }
+    },
+    "unknown_answers": [
+     [
+      "r",
+      "ranking"
+     ]
+    ]
+   },
+   "status": 200
+  },
+  {
+   "body": "[1]",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "body array",
+   "python": {
+    "error": {
+     "body": [
+      1
+     ],
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at ''.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "oops",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "body not json",
+   "python": {
+    "error": {
+     "body": "oops",
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at ''.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "body empty",
+   "python": {
+    "error": {
+     "body": null,
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at ''.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "null",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "body null",
+   "python": {
+    "error": {
+     "body": null,
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at ''.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "status 204 empty",
+   "python": {
+    "error": {
+     "body": null,
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "",
+     "message": "POST https://api.test/v1/systemone: 204 Invalid response data at ''.",
+     "request_id": null,
+     "status": 204
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 204
+  },
+  {
+   "body": "{\"usage\":{\"input_tokens\":1,\"output_tokens\":2}}",
+   "endpoint": "systemone",
+   "headers": {
+    "x-typesafe-request-id": "req-v"
+   },
+   "name": "model missing",
+   "python": {
+    "error": {
+     "body": {
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "model",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'model'. (request_id=req-v)",
+     "request_id": "req-v",
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":1,\"usage\":{\"input_tokens\":1,\"output_tokens\":2}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "model number",
+   "python": {
+    "error": {
+     "body": {
+      "model": 1,
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "model",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'model'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":null,\"usage\":{\"input_tokens\":1,\"output_tokens\":2}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "model null",
+   "python": {
+    "error": {
+     "body": {
+      "model": null,
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "model",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'model'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\"}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage missing",
+   "python": {
+    "error": {
+     "body": {
+      "model": "m"
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "usage",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'usage'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":null}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage null",
+   "python": {
+    "error": {
+     "body": {
+      "model": "m",
+      "usage": null
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "usage",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'usage'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":[]}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage array",
+   "python": {
+    "error": {
+     "body": {
+      "model": "m",
+      "usage": []
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "usage",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'usage'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":\"1\"}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage token string",
+   "python": {
+    "error": {
+     "body": {
+      "model": "m",
+      "usage": {
+       "input_tokens": "1"
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "usage.input_tokens",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'usage.input_tokens'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":true}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage token bool",
+   "python": {
+    "error": {
+     "body": {
+      "model": "m",
+      "usage": {
+       "input_tokens": true
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "usage.input_tokens",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'usage.input_tokens'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"output_tokens\":1.5}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage token fraction",
+   "python": {
+    "error": {
+     "body": {
+      "model": "m",
+      "usage": {
+       "output_tokens": 1.5
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "usage.output_tokens",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'usage.output_tokens'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"output_tokens\":1.0}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage token integral float",
+   "python": {
+    "error": {
+     "body": {
+      "model": "m",
+      "usage": {
+       "output_tokens": 1.0
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "usage.output_tokens",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'usage.output_tokens'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":100000000000000000000},\"answers\":{}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "usage token beyond int64",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {},
+     "groups": {
+      "choices": [],
+      "nouls": [],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 100000000000000000000,
+      "output_tokens": null
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":null}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "answers null",
+   "python": {
+    "error": {
+     "body": {
+      "answers": null,
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":[]}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "answers array",
+   "python": {
+    "error": {
+     "body": {
+      "answers": [],
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":\"x\"}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "answer not object",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": "x"
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.type",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.type'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":null}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "answer null",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": null
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.type",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.type'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "answer type missing",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {}
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.type",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.type'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{\"type\":1}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "answer type number",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "type": 1
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.type",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.type'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"answers\":{\"c\":{\"type\":1}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "answer type checked before model",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "type": 1
+       }
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.type",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.type'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"n\":{\"type\":\"noul\"}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "noul missing",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "n": {
+        "type": "noul"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.n.noul",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.n.noul'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"n\":{\"type\":\"noul\",\"noul\":\"0.5\"}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "noul string",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "n": {
+        "noul": "0.5",
+        "type": "noul"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.n.noul",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.n.noul'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"n\":{\"type\":\"noul\",\"noul\":null}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "noul null",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "n": {
+        "noul": null,
+        "type": "noul"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.n.noul",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.n.noul'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"n\":{\"type\":\"noul\",\"noul\":false}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "noul bool",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "n": {
+        "noul": false,
+        "type": "noul"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.n.noul",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.n.noul'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"n\":{\"type\":\"noul\",\"noul\":NaN}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "noul NaN literal",
+   "python": {
+    "ok": true,
+    "result": {
+     "answers": {
+      "n": {
+       "noul": {
+        "$nonfinite": "nan"
+       },
+       "type": "noul"
+      }
+     },
+     "groups": {
+      "choices": [],
+      "nouls": [
+       "n"
+      ],
+      "scores": []
+     },
+     "model": "m",
+     "request_id": null,
+     "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2
+     }
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{\"type\":\"choice\",\"confidence\":1,\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "choice missing choice",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "confidence": 1,
+        "probabilities": {},
+        "type": "choice"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.choice",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.choice'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{\"type\":\"choice\",\"choice\":1,\"confidence\":1,\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "choice choice number",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "choice": 1,
+        "confidence": 1,
+        "probabilities": {},
+        "type": "choice"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.choice",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.choice'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{\"type\":\"choice\",\"choice\":\"a\",\"confidence\":true,\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "choice confidence bool",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "choice": "a",
+        "confidence": true,
+        "probabilities": {},
+        "type": "choice"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.confidence",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.confidence'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{\"type\":\"choice\",\"choice\":\"a\",\"confidence\":1}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "choice probabilities missing",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "choice": "a",
+        "confidence": 1,
+        "type": "choice"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.probabilities",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.probabilities'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{\"type\":\"choice\",\"choice\":\"a\",\"confidence\":1,\"probabilities\":[]}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "choice probabilities array",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "choice": "a",
+        "confidence": 1,
+        "probabilities": [],
+        "type": "choice"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.probabilities",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.probabilities'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{\"type\":\"choice\",\"choice\":\"a\",\"confidence\":1,\"probabilities\":{\"a\":1,\"x\":null}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "choice probability null",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "choice": "a",
+        "confidence": 1,
+        "probabilities": {
+         "a": 1,
+         "x": null
+        },
+        "type": "choice"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.probabilities.x",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.probabilities.x'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{\"type\":\"choice\",\"choice\":\"a\",\"confidence\":1,\"probabilities\":{\"x\":\"1\"}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "choice probability string",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "choice": "a",
+        "confidence": 1,
+        "probabilities": {
+         "x": "1"
+        },
+        "type": "choice"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.probabilities.x",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.probabilities.x'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"c\":{\"type\":\"choice\",\"choice\":\"a\",\"confidence\":1,\"probabilities\":{\"z\":null,\"a\":null}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "choice probability document order",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "c": {
+        "choice": "a",
+        "confidence": 1,
+        "probabilities": {
+         "a": null,
+         "z": null
+        },
+        "type": "choice"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.c.probabilities.z",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.c.probabilities.z'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"s\":{\"type\":\"score\",\"confidence\":1,\"legend\":{},\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "score missing score",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "s": {
+        "confidence": 1,
+        "legend": {},
+        "probabilities": {},
+        "type": "score"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.s.score",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.score'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"s\":{\"type\":\"score\",\"score\":1,\"confidence\":1,\"legend\":[],\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "score legend array",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "s": {
+        "confidence": 1,
+        "legend": [],
+        "probabilities": {},
+        "score": 1,
+        "type": "score"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.s.legend",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.legend'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"s\":{\"type\":\"score\",\"score\":1,\"confidence\":1,\"legend\":{\"x\":\"a\"},\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "score legend key",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "s": {
+        "confidence": 1,
+        "legend": {
+         "x": "a"
+        },
+        "probabilities": {},
+        "score": 1,
+        "type": "score"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.s.legend.x",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.legend.x'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"s\":{\"type\":\"score\",\"score\":1,\"confidence\":1,\"legend\":{\"0\":1},\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "score legend number",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "s": {
+        "confidence": 1,
+        "legend": {
+         "0": 1
+        },
+        "probabilities": {},
+        "score": 1,
+        "type": "score"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.s.legend.0.str",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.legend.0.str'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"s\":{\"type\":\"score\",\"score\":1,\"confidence\":1,\"legend\":{\"0\":true},\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "score legend bool",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "s": {
+        "confidence": 1,
+        "legend": {
+         "0": true
+        },
+        "probabilities": {},
+        "score": 1,
+        "type": "score"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.s.legend.0.str",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.legend.0.str'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"s\":{\"type\":\"score\",\"score\":1,\"confidence\":1,\"legend\":{\"0\":null},\"probabilities\":{}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "score legend null",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "s": {
+        "confidence": 1,
+        "legend": {
+         "0": null
+        },
+        "probabilities": {},
+        "score": 1,
+        "type": "score"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.s.legend.0.str",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.legend.0.str'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"s\":{\"type\":\"score\",\"score\":1,\"confidence\":1,\"legend\":{},\"probabilities\":{\"1.5\":1}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "score probability key",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "s": {
+        "confidence": 1,
+        "legend": {},
+        "probabilities": {
+         "1.5": 1
+        },
+        "score": 1,
+        "type": "score"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.s.probabilities.1.5",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.probabilities.1.5'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"s\":{\"type\":\"score\",\"score\":1,\"confidence\":1,\"legend\":{},\"probabilities\":{\"0\":null}}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "score probability null",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "s": {
+        "confidence": 1,
+        "legend": {},
+        "probabilities": {
+         "0": null
+        },
+        "score": 1,
+        "type": "score"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.s.probabilities.0",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.s.probabilities.0'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"z\":{\"type\":\"noul\"},\"a\":{\"type\":\"noul\"}}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "first invalid answer in document order",
+   "python": {
+    "error": {
+     "body": {
+      "answers": {
+       "a": {
+        "type": "noul"
+       },
+       "z": {
+        "type": "noul"
+       }
+      },
+      "model": "m",
+      "usage": {
+       "input_tokens": 1,
+       "output_tokens": 2
+      }
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "field_path": "answers.z.noul",
+     "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'answers.z.noul'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"error\":\"bad\",\"message\":\"m\"}",
+   "endpoint": "systemone",
+   "headers": {
+    "x-typesafe-request-id": "req-e"
+   },
+   "name": "error string",
+   "python": {
+    "error": {
+     "body": {
+      "error": "bad",
+      "message": "m"
+     },
+     "class": "TypeSafeBadRequestError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 400 bad (request_id=req-e)",
+     "request_id": "req-e",
+     "status": 400
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 400
+  },
+  {
+   "body": "{\"error\":{\"message\":\"nested\"},\"message\":\"m\"}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "error.message",
+   "python": {
+    "error": {
+     "body": {
+      "error": {
+       "message": "nested"
+      },
+      "message": "m"
+     },
+     "class": "TypeSafeAuthenticationError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 401 nested",
+     "request_id": null,
+     "status": 401
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 401
+  },
+  {
+   "body": "{\"message\":\"msg\",\"detail\":\"d\"}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "message",
+   "python": {
+    "error": {
+     "body": {
+      "detail": "d",
+      "message": "msg"
+     },
+     "class": "TypeSafePermissionDeniedError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 403 msg",
+     "request_id": null,
+     "status": 403
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 403
+  },
+  {
+   "body": "{\"detail\":\"d\"}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "detail string",
+   "python": {
+    "error": {
+     "body": {
+      "detail": "d"
+     },
+     "class": "TypeSafeNotFoundError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 404 d",
+     "request_id": null,
+     "status": 404
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 404
+  },
+  {
+   "body": "{\"detail\":{\"message\":\"dm\"}}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "detail.message",
+   "python": {
+    "error": {
+     "body": {
+      "detail": {
+       "message": "dm"
+      }
+     },
+     "class": "TypeSafeUnprocessableEntityError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 422 dm",
+     "request_id": null,
+     "status": 422
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 422
+  },
+  {
+   "body": "{\"detail\":[{\"loc\":[\"body\",\"questions\",\"q\",\"score\",\"criteria\",0],\"msg\":\"Invalid\"},{\"loc\":[\"body\"],\"msg\":\"Missing\"},\"junk\",{\"loc\":\"x\",\"msg\":\"m\"},{\"msg\":5}]}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "detail list",
+   "python": {
+    "error": {
+     "body": {
+      "detail": [
+       {
+        "loc": [
+         "body",
+         "questions",
+         "q",
+         "score",
+         "criteria",
+         0
+        ],
+        "msg": "Invalid"
+       },
+       {
+        "loc": [
+         "body"
+        ],
+        "msg": "Missing"
+       },
+       "junk",
+       {
+        "loc": "x",
+        "msg": "m"
+       },
+       {
+        "msg": 5
+       }
+      ]
+     },
+     "class": "TypeSafeUnprocessableEntityError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 422 questions.q.score.criteria.0: Invalid; Missing; m",
+     "request_id": null,
+     "status": 422
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 422
+  },
+  {
+   "body": "{\"detail\":[]}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "detail list empty",
+   "python": {
+    "error": {
+     "body": {
+      "detail": []
+     },
+     "class": "TypeSafeUnprocessableEntityError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 422 {\"detail\":[]}",
+     "request_id": null,
+     "status": 422
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 422
+  },
+  {
+   "body": "{\"error\":\"Rate limit exceeded\"}",
+   "endpoint": "systemone",
+   "headers": {
+    "retry-after": "7",
+    "x-typesafe-request-id": "req-1"
+   },
+   "name": "rate limited",
+   "python": {
+    "error": {
+     "body": {
+      "error": "Rate limit exceeded"
+     },
+     "class": "TypeSafeRateLimitError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 429 Rate limit exceeded (request_id=req-1)",
+     "request_id": "req-1",
+     "retry_after_ms": 7000.0,
+     "status": 429
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 429
+  },
+  {
+   "body": "{\"error\":\"\"}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "empty error string dumps json",
+   "python": {
+    "error": {
+     "body": {
+      "error": ""
+     },
+     "class": "TypeSafeBadRequestError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 400 {\"error\":\"\"}",
+     "request_id": null,
+     "status": 400
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 400
+  },
+  {
+   "body": "{ \"code\" : 7 }",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "compact json dump",
+   "python": {
+    "error": {
+     "body": {
+      "code": 7
+     },
+     "class": "TypeSafeInternalServerError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 500 {\"code\":7}",
+     "request_id": null,
+     "status": 500
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 500
+  },
+  {
+   "body": "{\"data\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "json fallback truncated",
+   "python": {
+    "error": {
+     "body": {
+      "data": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+     },
+     "class": "TypeSafeInternalServerError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 503 {\"data\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…",
+     "request_id": null,
+     "status": 503
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 503
+  },
+  {
+   "body": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "plain text not truncated",
+   "python": {
+    "error": {
+     "body": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+     "class": "TypeSafeInternalServerError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 502 yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+     "request_id": null,
+     "status": 502
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 502
+  },
+  {
+   "body": "",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "empty body",
+   "python": {
+    "error": {
+     "body": null,
+     "class": "TypeSafeInternalServerError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 500 status code (no body)",
+     "request_id": null,
+     "status": 500
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 500
+  },
+  {
+   "body": "null",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "json null body",
+   "python": {
+    "error": {
+     "body": null,
+     "class": "TypeSafeInternalServerError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 500 status code (no body)",
+     "request_id": null,
+     "status": 500
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 500
+  },
+  {
+   "body": "[]",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "empty array body",
+   "python": {
+    "error": {
+     "body": [],
+     "class": "TypeSafeInternalServerError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 500 []",
+     "request_id": null,
+     "status": 500
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 500
+  },
+  {
+   "body": "42",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "number body",
+   "python": {
+    "error": {
+     "body": 42,
+     "class": "TypeSafeInternalServerError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 500 42",
+     "request_id": null,
+     "status": 500
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 500
+  },
+  {
+   "body": "{\"error\":\"caf\\u00e9 ☕\"}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "unicode message",
+   "python": {
+    "error": {
+     "body": {
+      "error": "café ☕"
+     },
+     "class": "TypeSafeBadRequestError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 400 café ☕",
+     "request_id": null,
+     "status": 400
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 400
+  },
+  {
+   "body": "",
+   "endpoint": "systemone",
+   "headers": {
+    "location": "/elsewhere"
+   },
+   "name": "redirect",
+   "python": {
+    "error": {
+     "body": null,
+     "class": "TypeSafeAPIError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 302 status code (no body)",
+     "request_id": null,
+     "status": 302
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 302
+  },
+  {
+   "body": "{\"error\":\"short and stout\"}",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "teapot",
+   "python": {
+    "error": {
+     "body": {
+      "error": "short and stout"
+     },
+     "class": "TypeSafeAPIError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 418 short and stout",
+     "request_id": null,
+     "status": 418
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 418
+  },
+  {
+   "body_b64": "YmFkIP8gYnl0ZQ==",
+   "endpoint": "systemone",
+   "headers": {},
+   "name": "invalid utf-8 text",
+   "python": {
+    "error": {
+     "body": "bad � byte",
+     "class": "TypeSafeBadRequestError",
+     "endpoint": "POST https://api.test/v1/systemone",
+     "message": "POST https://api.test/v1/systemone: 400 bad � byte",
+     "request_id": null,
+     "status": 400
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 400
+  },
+  {
+   "body": "{\"models\":[{\"name\":\"jev-latest\",\"description\":\"General.\",\"release_date\":\"2026-09-15\",\"extra\":1}]}",
+   "endpoint": "models",
+   "headers": {
+    "x-typesafe-request-id": "req-m"
+   },
+   "name": "models ok",
+   "python": {
+    "ok": true,
+    "result": {
+     "models": [
+      {
+       "description": "General.",
+       "name": "jev-latest",
+       "release_date": "2026-09-15"
+      }
+     ],
+     "request_id": "req-m"
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"models\":[]}",
+   "endpoint": "models",
+   "headers": {},
+   "name": "models empty",
+   "python": {
+    "ok": true,
+    "result": {
+     "models": [],
+     "request_id": null
+    },
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "null",
+   "endpoint": "models",
+   "headers": {},
+   "name": "models body null",
+   "python": {
+    "error": {
+     "body": null,
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "GET https://api.test/v1/models",
+     "field_path": "",
+     "message": "GET https://api.test/v1/models: 200 Invalid response data at ''.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{}",
+   "endpoint": "models",
+   "headers": {},
+   "name": "models missing",
+   "python": {
+    "error": {
+     "body": {},
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "GET https://api.test/v1/models",
+     "field_path": "models",
+     "message": "GET https://api.test/v1/models: 200 Invalid response data at 'models'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"models\":\"bad\"}",
+   "endpoint": "models",
+   "headers": {},
+   "name": "models not array",
+   "python": {
+    "error": {
+     "body": {
+      "models": "bad"
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "GET https://api.test/v1/models",
+     "field_path": "models",
+     "message": "GET https://api.test/v1/models: 200 Invalid response data at 'models'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"models\":[{\"name\":\"a\",\"description\":\"d\",\"release_date\":\"r\"},{\"description\":\"d\",\"release_date\":\"r\"}]}",
+   "endpoint": "models",
+   "headers": {},
+   "name": "models card field missing",
+   "python": {
+    "error": {
+     "body": {
+      "models": [
+       {
+        "description": "d",
+        "name": "a",
+        "release_date": "r"
+       },
+       {
+        "description": "d",
+        "release_date": "r"
+       }
+      ]
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "GET https://api.test/v1/models",
+     "field_path": "models[1].name",
+     "message": "GET https://api.test/v1/models: 200 Invalid response data at 'models[1].name'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"models\":[1]}",
+   "endpoint": "models",
+   "headers": {},
+   "name": "models card not object",
+   "python": {
+    "error": {
+     "body": {
+      "models": [
+       1
+      ]
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "GET https://api.test/v1/models",
+     "field_path": "models[0]",
+     "message": "GET https://api.test/v1/models: 200 Invalid response data at 'models[0]'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"models\":[{\"name\":\"a\",\"description\":\"d\",\"release_date\":5}]}",
+   "endpoint": "models",
+   "headers": {},
+   "name": "models date number",
+   "python": {
+    "error": {
+     "body": {
+      "models": [
+       {
+        "description": "d",
+        "name": "a",
+        "release_date": 5
+       }
+      ]
+     },
+     "class": "TypeSafeAPIResponseValidationError",
+     "endpoint": "GET https://api.test/v1/models",
+     "field_path": "models[0].release_date",
+     "message": "GET https://api.test/v1/models: 200 Invalid response data at 'models[0].release_date'.",
+     "request_id": null,
+     "status": 200
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 200
+  },
+  {
+   "body": "{\"error\":\"invalid key\"}",
+   "endpoint": "models",
+   "headers": {},
+   "name": "models error",
+   "python": {
+    "error": {
+     "body": {
+      "error": "invalid key"
+     },
+     "class": "TypeSafeAuthenticationError",
+     "endpoint": "GET https://api.test/v1/models",
+     "message": "GET https://api.test/v1/models: 401 invalid key",
+     "request_id": null,
+     "status": 401
+    },
+    "ok": false,
+    "unknown_answers": []
+   },
+   "status": 401
+  }
+ ],
+ "retries": [
+  {
+   "max_retries": 2,
+   "name": "default 500 exhausts",
+   "python": {
+    "attempts": 3,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 3"
+      },
+      "class": "TypeSafeInternalServerError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 500 attempt 3 (request_id=req-3)",
+      "request_id": "req-3",
+      "status": 500
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null,
+     "1",
+     "2"
+    ]
+   },
+   "replies": [
+    500
+   ]
+  },
+  {
+   "max_retries": 2,
+   "name": "503 then ok",
+   "python": {
+    "attempts": 2,
+    "outcome": {
+     "ok": true
+    },
+    "retry_count_headers": [
+     null,
+     "1"
+    ]
+   },
+   "replies": [
+    503,
+    200
+   ]
+  },
+  {
+   "max_retries": 2,
+   "name": "400 not retried",
+   "python": {
+    "attempts": 1,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 1"
+      },
+      "class": "TypeSafeBadRequestError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 400 attempt 1 (request_id=req-1)",
+      "request_id": "req-1",
+      "status": 400
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null
+    ]
+   },
+   "replies": [
+    400
+   ]
+  },
+  {
+   "max_retries": 1,
+   "name": "408 retried",
+   "python": {
+    "attempts": 2,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 2"
+      },
+      "class": "TypeSafeAPIError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 408 attempt 2 (request_id=req-2)",
+      "request_id": "req-2",
+      "status": 408
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null,
+     "1"
+    ]
+   },
+   "replies": [
+    408
+   ]
+  },
+  {
+   "max_retries": 1,
+   "name": "429 retried",
+   "python": {
+    "attempts": 2,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 2"
+      },
+      "class": "TypeSafeRateLimitError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 429 attempt 2 (request_id=req-2)",
+      "request_id": "req-2",
+      "retry_after_ms": null,
+      "status": 429
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null,
+     "1"
+    ]
+   },
+   "replies": [
+    429
+   ]
+  },
+  {
+   "max_retries": 1,
+   "name": "599 retried",
+   "python": {
+    "attempts": 2,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 2"
+      },
+      "class": "TypeSafeInternalServerError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 599 attempt 2 (request_id=req-2)",
+      "request_id": "req-2",
+      "status": 599
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null,
+     "1"
+    ]
+   },
+   "replies": [
+    599
+   ]
+  },
+  {
+   "max_retries": 2,
+   "name": "302 not retried",
+   "python": {
+    "attempts": 1,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 1"
+      },
+      "class": "TypeSafeAPIError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 302 attempt 1 (request_id=req-1)",
+      "request_id": "req-1",
+      "status": 302
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null
+    ]
+   },
+   "replies": [
+    302
+   ]
+  },
+  {
+   "max_retries": 2,
+   "name": "409 not retried",
+   "python": {
+    "attempts": 1,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 1"
+      },
+      "class": "TypeSafeAPIError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 409 attempt 1 (request_id=req-1)",
+      "request_id": "req-1",
+      "status": 409
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null
+    ]
+   },
+   "replies": [
+    409
+   ]
+  },
+  {
+   "max_retries": 2,
+   "name": "422 not retried",
+   "python": {
+    "attempts": 1,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 1"
+      },
+      "class": "TypeSafeUnprocessableEntityError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 422 attempt 1 (request_id=req-1)",
+      "request_id": "req-1",
+      "status": 422
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null
+    ]
+   },
+   "replies": [
+    422
+   ]
+  },
+  {
+   "http_statuses": [
+    400
+   ],
+   "max_retries": 1,
+   "name": "custom statuses retry 400",
+   "python": {
+    "attempts": 2,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 2"
+      },
+      "class": "TypeSafeBadRequestError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 400 attempt 2 (request_id=req-2)",
+      "request_id": "req-2",
+      "status": 400
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null,
+     "1"
+    ]
+   },
+   "replies": [
+    400
+   ]
+  },
+  {
+   "http_statuses": [
+    400
+   ],
+   "max_retries": 2,
+   "name": "custom statuses skip 500",
+   "python": {
+    "attempts": 1,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 1"
+      },
+      "class": "TypeSafeInternalServerError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 500 attempt 1 (request_id=req-1)",
+      "request_id": "req-1",
+      "status": 500
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null
+    ]
+   },
+   "replies": [
+    500
+   ]
+  },
+  {
+   "http_statuses": [],
+   "max_retries": 2,
+   "name": "empty statuses",
+   "python": {
+    "attempts": 1,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 1"
+      },
+      "class": "TypeSafeInternalServerError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 503 attempt 1 (request_id=req-1)",
+      "request_id": "req-1",
+      "status": 503
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null
+    ]
+   },
+   "replies": [
+    503
+   ]
+  },
+  {
+   "max_retries": 4,
+   "name": "max retries 4",
+   "python": {
+    "attempts": 5,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 5"
+      },
+      "class": "TypeSafeInternalServerError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 500 attempt 5 (request_id=req-5)",
+      "request_id": "req-5",
+      "status": 500
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null,
+     "1",
+     "2",
+     "3",
+     "4"
+    ]
+   },
+   "replies": [
+    500
+   ]
+  },
+  {
+   "max_retries": 0,
+   "name": "max retries 0",
+   "python": {
+    "attempts": 1,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 1"
+      },
+      "class": "TypeSafeInternalServerError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 500 attempt 1 (request_id=req-1)",
+      "request_id": "req-1",
+      "status": 500
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null
+    ]
+   },
+   "replies": [
+    500
+   ]
+  },
+  {
+   "headers": {
+    "X-TypeSafe-Retry-Count": "99"
+   },
+   "max_retries": 1,
+   "name": "user retry header stripped",
+   "python": {
+    "attempts": 2,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 2"
+      },
+      "class": "TypeSafeInternalServerError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 500 attempt 2 (request_id=req-2)",
+      "request_id": "req-2",
+      "status": 500
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null,
+     "1"
+    ]
+   },
+   "replies": [
+    500
+   ]
+  },
+  {
+   "http_statuses": [
+    200
+   ],
+   "max_retries": 2,
+   "name": "invalid 200 retried by status",
+   "python": {
+    "attempts": 3,
+    "outcome": {
+     "error": {
+      "body": {
+       "model": 1
+      },
+      "class": "TypeSafeAPIResponseValidationError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "field_path": "model",
+      "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'model'.",
+      "request_id": null,
+      "status": 200
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null,
+     "1",
+     "2"
+    ]
+   },
+   "replies": [
+    "invalid"
+   ]
+  },
+  {
+   "max_retries": 2,
+   "name": "invalid 200 not retried",
+   "python": {
+    "attempts": 1,
+    "outcome": {
+     "error": {
+      "body": {
+       "model": 1
+      },
+      "class": "TypeSafeAPIResponseValidationError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "field_path": "model",
+      "message": "POST https://api.test/v1/systemone: 200 Invalid response data at 'model'.",
+      "request_id": null,
+      "status": 200
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null
+    ]
+   },
+   "replies": [
+    "invalid"
+   ]
+  },
+  {
+   "max_retries": 2,
+   "name": "last error returned",
+   "python": {
+    "attempts": 3,
+    "outcome": {
+     "error": {
+      "body": {
+       "error": "attempt 3"
+      },
+      "class": "TypeSafeInternalServerError",
+      "endpoint": "POST https://api.test/v1/systemone",
+      "message": "POST https://api.test/v1/systemone: 502 attempt 3 (request_id=req-3)",
+      "request_id": "req-3",
+      "status": 502
+     },
+     "ok": false
+    },
+    "retry_count_headers": [
+     null,
+     "1",
+     "2"
+    ]
+   },
+   "replies": [
+    500,
+    503,
+    502
+   ]
+  }
+ ],
+ "retry_after": [
+  {
+   "headers": {
+    "retry-after": "2"
+   },
+   "name": "{\"retry-after\": \"2\"}",
+   "python_ms": 2000.0
+  },
+  {
+   "headers": {
+    "retry-after": "0.25"
+   },
+   "name": "{\"retry-after\": \"0.25\"}",
+   "python_ms": 250.0
+  },
+  {
+   "headers": {
+    "retry-after": " 2 "
+   },
+   "name": "{\"retry-after\": \" 2 \"}",
+   "python_ms": 2000.0
+  },
+  {
+   "headers": {
+    "retry-after": "+3"
+   },
+   "name": "{\"retry-after\": \"+3\"}",
+   "python_ms": 3000.0
+  },
+  {
+   "headers": {
+    "retry-after": "bad"
+   },
+   "name": "{\"retry-after\": \"bad\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after": "-1"
+   },
+   "name": "{\"retry-after\": \"-1\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after": "-0"
+   },
+   "name": "{\"retry-after\": \"-0\"}",
+   "python_ms": -0.0
+  },
+  {
+   "headers": {
+    "retry-after": ""
+   },
+   "name": "{\"retry-after\": \"\"}",
+   "python_ms": 0.0
+  },
+  {
+   "headers": {
+    "retry-after": "1e308"
+   },
+   "name": "{\"retry-after\": \"1e308\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after": "1e400"
+   },
+   "name": "{\"retry-after\": \"1e400\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after": "9223372036.9"
+   },
+   "name": "{\"retry-after\": \"9223372036.9\"}",
+   "python_ms": 9223372036900.0
+  },
+  {
+   "headers": {
+    "retry-after": "inf"
+   },
+   "name": "{\"retry-after\": \"inf\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after": "infinity"
+   },
+   "name": "{\"retry-after\": \"infinity\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after": "nan"
+   },
+   "name": "{\"retry-after\": \"nan\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after": "1_000"
+   },
+   "name": "{\"retry-after\": \"1_000\"}",
+   "python_ms": 1000000.0
+  },
+  {
+   "headers": {
+    "retry-after": "0x10"
+   },
+   "name": "{\"retry-after\": \"0x10\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after": "0x1p4"
+   },
+   "name": "{\"retry-after\": \"0x1p4\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after": "3",
+    "retry-after-ms": "0x1p4"
+   },
+   "name": "{\"retry-after\": \"3\", \"retry-after-ms\": \"0x1p4\"}",
+   "python_ms": 3000.0
+  },
+  {
+   "headers": {
+    "retry-after": "1e3"
+   },
+   "name": "{\"retry-after\": \"1e3\"}",
+   "python_ms": 1000000.0
+  },
+  {
+   "headers": {
+    "retry-after": "Wed, 21 Oct 2015 07:28:00 GMT"
+   },
+   "name": "{\"retry-after\": \"Wed, 21 Oct 2015 07:28:00 GMT\"}",
+   "python_ms": 0.0
+  },
+  {
+   "headers": {
+    "retry-after": "Wednesday, 21-Oct-15 07:28:00 GMT"
+   },
+   "name": "{\"retry-after\": \"Wednesday, 21-Oct-15 07:28:00 GMT\"}",
+   "python_ms": 0.0
+  },
+  {
+   "headers": {
+    "retry-after": "Sun Nov  6 08:49:37 1994"
+   },
+   "name": "{\"retry-after\": \"Sun Nov  6 08:49:37 1994\"}",
+   "python_ms": 0.0
+  },
+  {
+   "headers": {
+    "retry-after-ms": "150"
+   },
+   "name": "{\"retry-after-ms\": \"150\"}",
+   "python_ms": 150.0
+  },
+  {
+   "headers": {
+    "retry-after-ms": "0.5"
+   },
+   "name": "{\"retry-after-ms\": \"0.5\"}",
+   "python_ms": 0.5
+  },
+  {
+   "headers": {
+    "retry-after-ms": "1e-400"
+   },
+   "name": "{\"retry-after-ms\": \"1e-400\"}",
+   "python_ms": 0.0
+  },
+  {
+   "headers": {
+    "retry-after": "3",
+    "retry-after-ms": "150"
+   },
+   "name": "{\"retry-after\": \"3\", \"retry-after-ms\": \"150\"}",
+   "python_ms": 150.0
+  },
+  {
+   "headers": {
+    "retry-after": "3",
+    "retry-after-ms": "inf"
+   },
+   "name": "{\"retry-after\": \"3\", \"retry-after-ms\": \"inf\"}",
+   "python_ms": 3000.0
+  },
+  {
+   "headers": {
+    "retry-after": "3",
+    "retry-after-ms": "NaN"
+   },
+   "name": "{\"retry-after\": \"3\", \"retry-after-ms\": \"NaN\"}",
+   "python_ms": 3000.0
+  },
+  {
+   "headers": {
+    "retry-after": "3",
+    "retry-after-ms": "-1"
+   },
+   "name": "{\"retry-after\": \"3\", \"retry-after-ms\": \"-1\"}",
+   "python_ms": 3000.0
+  },
+  {
+   "headers": {
+    "retry-after": "3",
+    "retry-after-ms": "bad"
+   },
+   "name": "{\"retry-after\": \"3\", \"retry-after-ms\": \"bad\"}",
+   "python_ms": 3000.0
+  },
+  {
+   "headers": {
+    "retry-after-ms": "-1"
+   },
+   "name": "{\"retry-after-ms\": \"-1\"}",
+   "python_ms": null
+  },
+  {
+   "headers": {
+    "retry-after-ms": ""
+   },
+   "name": "{\"retry-after-ms\": \"\"}",
+   "python_ms": 0.0
+  }
+ ]
+}

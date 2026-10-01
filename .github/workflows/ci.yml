@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Test the toolchain setup-go installed, never an automatic download.
+  GOTOOLCHAIN: local
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, Go ${{ matrix.go }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        # "minimum" is the go directive in go.mod; "stable" is the latest release.
+        go: [minimum, stable]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ matrix.go == 'minimum' && 'go.mod' || '' }}
+          go-version: ${{ matrix.go == 'stable' && 'stable' || '' }}
+      - run: go version
+      - name: Zero third-party dependencies
+        shell: bash
+        run: |
+          deps=$(go list -m all | grep -vx 'github.com/klnstprx/typesafe-sdk-go' || true)
+          if [ -n "$deps" ] || [ -e go.sum ]; then echo "unexpected dependencies:"; echo "$deps"; exit 1; fi
+      - run: go vet ./...
+      - run: go test -count=1 ./...
+      - name: Race detector
+        if: runner.os != 'Windows'
+        run: go test -race -count=1 ./...
+      - name: External consumer module
+        working-directory: testdata/consumer
+        run: |
+          go vet ./...
+          go test -count=1 ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then echo "$unformatted"; exit 1; fi
+      - name: staticcheck
+        run: go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./...
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Fuzz each target (bounded)
+        run: |
+          for target in $(go test -list '^Fuzz' . | grep '^Fuzz'); do
+            echo "::group::$target"
+            go test -run='^$' -fuzz="^${target}\$" -fuzztime=60s .
+            echo "::endgroup::"
+          done
+      - name: Upload new failing inputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-failures
+          path: testdata/fuzz
+
+  parity:
+    name: python parity drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the pinned Python SDK commit
+        id: pin
+        run: echo "commit=$(sed -n 's/^PINNED_COMMIT = "\(.*\)"$/\1/p' testdata/parity/generate.py)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: typesafe-ai/typesafe-sdk-python
+          ref: ${{ steps.pin.outputs.commit }}
+          path: python-sdk
+      - uses: astral-sh/setup-uv@v5
+      - name: Regenerate expectations
+        run: testdata/parity/regenerate.sh python-sdk
+      - name: Fail on drift
+        run: git diff --exit-code -- testdata/parity
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - run: go test -count=1 -run TestPythonParity -v .
