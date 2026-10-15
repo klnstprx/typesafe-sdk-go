@@ -90,7 +90,7 @@ func TestOpenAPIContract(t *testing.T) {
 		"ChoiceQuestion":    Choice{Instructions: "i", Criteria: map[string]any{"a": nil}},
 		"ScoreQuestion":     Score{Instructions: "i", Criteria: []any{"low"}},
 		"NoulCriteria":      NoulCriteria{True: "t", False: "f"},
-		"SystemOneRequest":  systemOneBody{State: json.RawMessage(`"s"`), Model: "m", Questions: map[string]json.RawMessage{}},
+		"SystemOneRequest":  SystemOneRequest{State: json.RawMessage(`"s"`), Model: "m", Questions: Questions{"q": Noul{}}},
 		"SystemOneResponse": SystemOneResponse{Model: "m"},
 		"NoulAnswer":        NoulAnswer{},
 		"ChoiceAnswer":      ChoiceAnswer{},

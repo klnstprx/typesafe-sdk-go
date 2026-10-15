@@ -1,6 +1,7 @@
 package typesafe
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"maps"
@@ -11,6 +12,68 @@ import (
 
 // Questions maps question names to questions. Answers use the same names.
 type Questions map[string]Question
+
+// MarshalJSON validates and encodes the named questions using the same rules
+// as SystemOne.
+func (qs Questions) MarshalJSON() ([]byte, error) {
+	wire, err := normalizeQuestions(qs)
+	if err != nil {
+		return nil, err
+	}
+	return marshalJSON(wire)
+}
+
+// UnmarshalJSON decodes known types into Noul, Choice, and Score values.
+// Unknown types become RawQuestion values. Unknown fields on known types are
+// ignored. Structured content uses json.Number so large integers survive a
+// decode/encode round trip. Existing encoding rules validate decoded questions.
+func (qs *Questions) UnmarshalJSON(data []byte) error {
+	var wire map[string]json.RawMessage
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return fmt.Errorf("typesafe: questions must be a JSON object")
+	}
+	out := make(Questions, len(wire))
+	for _, name := range slices.Sorted(maps.Keys(wire)) {
+		var tag struct {
+			Type string `json:"type"`
+		}
+		if err := json.Unmarshal(wire[name], &tag); err != nil || tag.Type == "" {
+			return fmt.Errorf("typesafe: question %q requires a non-empty string type", name)
+		}
+		var q Question
+		switch tag.Type {
+		case "noul":
+			q = &Noul{}
+		case "choice":
+			q = &Choice{}
+		case "score":
+			q = &Score{}
+		default:
+			q = &RawQuestion{}
+		}
+		dec := json.NewDecoder(bytes.NewReader(wire[name]))
+		dec.UseNumber()
+		if err := dec.Decode(q); err != nil {
+			return fmt.Errorf("typesafe: question %q has invalid fields", name)
+		}
+		switch v := q.(type) {
+		case *Noul:
+			q = *v
+		case *Choice:
+			q = *v
+		case *Score:
+			q = *v
+		case *RawQuestion:
+			q = *v
+		}
+		out[name] = q
+	}
+	if _, err := normalizeQuestions(out); err != nil {
+		return err
+	}
+	*qs = out
+	return nil
+}
 
 // Question is one of [Noul], [Choice], [Score], or [RawQuestion].
 //

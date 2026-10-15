@@ -9,10 +9,43 @@ import (
 	"net/http"
 )
 
+// SystemOneRequest is the SystemOne wire request. State must contain a JSON
+// string, object, or array. An empty Model selects the client's default in
+// CreateSystemOne; call options take precedence over Model.
+// JSON decoding ignores unknown fields. Use Validate to check a decoded request
+// before using it without a client call. CreateSystemOne validates automatically.
+type SystemOneRequest struct {
+	State     json.RawMessage `json:"state"`
+	Model     string          `json:"model"`
+	Questions Questions       `json:"questions"`
+}
+
+// systemOneBody holds questions after validation and encoding. Keeping the
+// normalized bytes avoids invoking caller marshalers twice during a call.
 type systemOneBody struct {
 	State     json.RawMessage            `json:"state"`
 	Model     string                     `json:"model"`
 	Questions map[string]json.RawMessage `json:"questions"`
+}
+
+// Validate checks state and questions using the same rules as SystemOne.
+// It does not resolve or require a model; model defaults belong to the client.
+func (r SystemOneRequest) Validate() error {
+	if _, err := encodeContent(r.State, "state"); err != nil {
+		return err
+	}
+	_, err := normalizeQuestions(r.Questions)
+	return err
+}
+
+// CreateSystemOne sends a decoded or constructed request. A non-empty request
+// Model overrides the client default; WithModel overrides either, even when
+// explicitly empty. Other options and response behavior match SystemOne.
+func (c *Client) CreateSystemOne(ctx context.Context, req SystemOneRequest, opts ...CallOption) (*SystemOneResponse, error) {
+	if req.Model != "" {
+		opts = append([]CallOption{WithModel(req.Model)}, opts...)
+	}
+	return c.SystemOne(ctx, req.State, req.Questions, opts...)
 }
 
 // SystemOne answers the named questions about state, which must encode to a

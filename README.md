@@ -82,6 +82,38 @@ unchanged during calls. `WithHTTPClient` shares your client's transport and
 cookie jar without mutating the client or closing its transport; its timeout
 applies unless overridden by `WithTimeout`.
 
+## Decoding requests
+
+Proxies and compatible servers can decode the public wire request:
+
+```go
+var req typesafe.SystemOneRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	return err
+}
+if err := req.Validate(); err != nil {
+	return err
+}
+resp, err := client.CreateSystemOne(ctx, req)
+```
+
+`CreateSystemOne` also validates before sending. `Validate` checks state and
+questions, not model defaults. An omitted or empty request model uses the client
+default. A non-empty request model overrides it; per-call `WithModel` overrides
+the request, including an explicit empty string. `WithExtraBody` retains its
+existing final override behavior. The original `SystemOne` method is unchanged.
+
+`Questions.UnmarshalJSON` selects `Noul`, `Choice`, or `Score`; unknown types
+become `RawQuestion`. Structured question content uses `json.Number` to preserve
+large integers; state remains `json.RawMessage`. Unknown fields are ignored for
+known questions. `DisallowUnknownFields` on an outer decoder only restricts the
+request envelope, not the custom question decoder. Applications that require
+a strict field allowlist must enforce that policy separately. Body limits,
+authentication, and deployment policies remain application responsibilities.
+Known types decode under the typed primitive rules, even if originally encoded
+with `RawQuestion`. That encoding escape hatch remains available, but does not
+make invalid typed fields valid when decoding a known question type.
+
 ## Timeouts and retries
 
 The caller's context bounds network I/O and retry waits across the operation.
