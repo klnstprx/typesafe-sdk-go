@@ -12,7 +12,7 @@ from v1.0.0 and follows semantic versioning.
 ## Install
 
 ```sh
-go get github.com/klnstprx/typesafe-sdk-go@v1.0.0
+go get github.com/klnstprx/typesafe-sdk-go@v1.0.1
 ```
 
 ## Quickstart

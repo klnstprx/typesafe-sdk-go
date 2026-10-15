@@ -4,6 +4,22 @@ This project follows [Semantic Versioning](https://semver.org). From v1.0.0,
 the exported API of `github.com/klnstprx/typesafe-sdk-go` is stable: breaking
 changes require a new major version.
 
+## v1.0.1 — 2026-10-15
+
+### API
+
+- `SystemOneRequest` exposes the SystemOne wire request (`State`, `Model`,
+  `Questions`) so proxies and compatible servers can decode it with
+  `encoding/json`. `Validate` applies the same state and question rules as
+  `SystemOne` without a client call.
+- `Client.CreateSystemOne` sends a decoded or constructed `SystemOneRequest`.
+  A non-empty request `Model` overrides the client default; `WithModel`
+  overrides both, even when explicitly empty. `SystemOne` is unchanged.
+- `Questions` implements `json.Marshaler` and `json.Unmarshaler`. Decoding
+  selects `Noul`, `Choice`, or `Score` by type and falls back to `RawQuestion`
+  for unknown types; structured content decodes with `json.Number` so large
+  integers survive a round trip. Unknown fields on known types are ignored.
+
 ## v1.0.0 — 2026-10-01
 
 Initial release. Matches the observable behavior of the Python SDK
