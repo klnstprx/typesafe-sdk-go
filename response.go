@@ -414,7 +414,8 @@ type ModelMetadata struct {
 	Name string `json:"name"`
 	// Description describes the model and its capabilities.
 	Description string `json:"description"`
-	// ReleaseDate is formatted as YYYY-MM-DD.
+	// ReleaseDate is formatted as YYYY-MM-DD, or "" when the server omits it
+	// or sends null, as llama-server SystemOne servers do.
 	ReleaseDate string `json:"release_date"`
 }
 
@@ -465,9 +466,15 @@ func decodeModels(data []byte) (*ListModelsResponse, error) {
 		for _, field := range [...]struct {
 			key string
 			dst *string
-		}{{"name", &m.Name}, {"description", &m.Description}, {"release_date", &m.ReleaseDate}} {
+		}{{"name", &m.Name}, {"description", &m.Description}} {
 			if *field.dst, ok = decodeString(f[field.key]); !ok {
 				return nil, invalidAt(path + "." + field.key)
+			}
+		}
+		// llama-server SystemOne servers omit release_date; absent or null is "".
+		if raw, present := f["release_date"]; present && firstByte(raw) != 'n' {
+			if m.ReleaseDate, ok = decodeString(raw); !ok {
+				return nil, invalidAt(path + ".release_date")
 			}
 		}
 	}

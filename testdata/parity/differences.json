@@ -121,6 +121,12 @@
   }
  },
  {
+  "id": "optional-release-date",
+  "kind": "note",
+  "summary": "Go accepts a model entry whose release_date is absent or null and reports it as \"\"; Python 0.7.2 rejects the list.",
+  "reason": "llama-server SystemOne servers (0.7.0, build 11669) return GET /v1/models entries without release_date, so a required field would make their model list unreadable. A present non-string release_date is still a validation error, as in Python. The OpenAPI spec still lists release_date as required; openapi_test.go records it in decoderTolerates. The fixture has no case without release_date."
+ },
+ {
   "id": "request-json-encoding",
   "kind": "note",
   "summary": "Request bodies are compared as parsed JSON, not bytes.",

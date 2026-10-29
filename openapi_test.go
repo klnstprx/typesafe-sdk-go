@@ -57,10 +57,14 @@ var requiredFields = map[string][]string{
 }
 
 // decoderTolerates lists spec-required response fields that the SDK
-// deliberately accepts when absent or null, matching the Python SDK.
+// deliberately accepts when absent or null. Usage and SystemOneResponse match
+// the Python SDK; ModelMetadata.release_date deviates from it because
+// llama-server SystemOne servers omit it (see "optional-release-date" in
+// testdata/parity/differences.json).
 var decoderTolerates = map[string][]string{
 	"Usage":             {"input_tokens", "output_tokens"},
 	"SystemOneResponse": {"answers"},
+	"ModelMetadata":     {"release_date"},
 }
 
 func keysOf(t *testing.T, v any) []string {

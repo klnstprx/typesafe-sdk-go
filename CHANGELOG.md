@@ -4,6 +4,16 @@ This project follows [Semantic Versioning](https://semver.org). From v1.0.0,
 the exported API of `github.com/klnstprx/typesafe-sdk-go` is stable: breaking
 changes require a new major version.
 
+## Unreleased
+
+### Fixed
+
+- `Models.List` accepts a model entry whose `release_date` is absent or null
+  and reports `ReleaseDate` as `""`. llama-server SystemOne servers omit
+  `release_date`, so the SDK rejected their whole model list. A present
+  non-string `release_date` is still invalid. The OpenAPI spec and Python SDK
+  0.7.2 still require the field; this is a documented deviation.
+
 ## v1.0.1 — 2026-10-15
 
 ### API

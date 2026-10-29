@@ -176,6 +176,30 @@ func TestModelsValidationPaths(t *testing.T) {
 	}
 }
 
+func TestModelsOptionalReleaseDate(t *testing.T) {
+	cases := []struct {
+		name, body string
+		want       ModelMetadata
+	}{
+		{"absent", `{"models":[{"name":"a","description":"d"}]}`, ModelMetadata{Name: "a", Description: "d"}},
+		{"null", `{"models":[{"name":"a","description":"d","release_date":null}]}`, ModelMetadata{Name: "a", Description: "d"}},
+		// GET /v1/models from llama-server 0.7.0 (build 11669), trimmed.
+		{"llama-server", `{"models":[{"name":"ggml-org/Kev-4B-GGUF:Q4_K_M","model":"ggml-org/Kev-4B-GGUF:Q4_K_M","type":"model","description":"","capabilities":["completion"]}],"object":"list","data":[{"id":"ggml-org/Kev-4B-GGUF:Q4_K_M","object":"model","owned_by":"llamacpp"}]}`, ModelMetadata{Name: "ggml-org/Kev-4B-GGUF:Q4_K_M"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := fakeClient(t, newFake(ok(tc.body)), noRetry())
+			resp, err := c.Models.List(bg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := []ModelMetadata{tc.want}; !reflect.DeepEqual(resp.Models, want) {
+				t.Errorf("Models = %#v, want %#v", resp.Models, want)
+			}
+		})
+	}
+}
+
 func TestResponseMetaCopies(t *testing.T) {
 	c := fakeClient(t, newFake(reply{status: 200, body: fullBody, header: hdr("X-Typesafe-Request-Id", "req-1", "X-Other", "v")}))
 	resp, err := c.SystemOne(bg, "x", spamQuestion)

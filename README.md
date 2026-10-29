@@ -148,6 +148,9 @@ Responses expose `RequestID()`, `Header()`, `RawJSON()`, and `RawHTTPResponse()`
 Headers and raw JSON are copies; diagnostic HTTP responses contain request
 credentials and share read-only TLS state. Use `client.Models.List(ctx)` to
 discover available models; see [listmodels](examples/listmodels).
+`ReleaseDate` is optional: it is `""` when the server omits it or sends null,
+because llama-server SystemOne servers list models without `release_date`.
+A non-string `release_date` is still a validation error.
 
 ## Errors
 
