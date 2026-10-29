@@ -19,7 +19,9 @@ const fullBody = `{
 		"urgency": {"type": "score", "score": 1.7, "confidence": 0.8,
 			"legend": {"0": "low", "1": {"level": "mid"}, "2": ["high"]},
 			"probabilities": {"0": 0.1, "1": 0.1, "2": 0.8}},
-		"future": {"type": "ranking", "order": [1, 2]}
+		"future": {"type": "ranking", "order": [1, 2]},
+		"dog": {"type": "box", "box": {"top": 0.2, "bottom": 0.66, "left": 0.19, "right": 0.68}, "confidence": 0.9, "extra": 1},
+		"spot": {"type": "box", "box": {"top": 0, "bottom": 1, "left": 0, "right": 1}, "confidence": null}
 	},
 	"trace": "ignored"
 }`
@@ -41,6 +43,8 @@ func TestSystemOneResponseDecoding(t *testing.T) {
 			Legend:        map[int]any{0: "low", 1: map[string]any{"level": "mid"}, 2: []any{"high"}},
 			Probabilities: map[int]float64{0: 0.1, 1: 0.1, 2: 0.8},
 		},
+		"dog":  BoxAnswer{Box: BoxCoordinates{Top: 0.2, Bottom: 0.66, Left: 0.19, Right: 0.68}, Confidence: ptr(0.9)},
+		"spot": BoxAnswer{Box: BoxCoordinates{Bottom: 1, Right: 1}},
 	}
 	if !reflect.DeepEqual(resp.Answers, want) {
 		t.Errorf("Answers = %#v", resp.Answers)
@@ -53,6 +57,9 @@ func TestSystemOneResponseDecoding(t *testing.T) {
 	}
 	if !reflect.DeepEqual(resp.Scores()["urgency"], want["urgency"]) || len(resp.Scores()) != 1 {
 		t.Errorf("Scores() = %v", resp.Scores())
+	}
+	if !reflect.DeepEqual(resp.Boxes(), map[string]BoxAnswer{"dog": want["dog"].(BoxAnswer), "spot": want["spot"].(BoxAnswer)}) {
+		t.Errorf("Boxes() = %v", resp.Boxes())
 	}
 	if string(resp.RawJSON()) != fullBody {
 		t.Error("RawJSON() differs from the original body")
@@ -291,6 +298,8 @@ func TestResponseSerialization(t *testing.T) {
 		"spam":    {"noul", "type"},
 		"tone":    {"choice", "confidence", "probabilities", "type"},
 		"urgency": {"confidence", "legend", "probabilities", "score", "type"},
+		"dog":     {"box", "confidence", "type"},
+		"spot":    {"box", "confidence", "type"},
 	}
 	for name, keys := range wantKeys {
 		if got := slices.Sorted(maps.Keys(wire.Answers[name])); !slices.Equal(got, keys) {
@@ -299,6 +308,9 @@ func TestResponseSerialization(t *testing.T) {
 	}
 	if wire.Answers["urgency"]["type"] != "score" || wire.Answers["urgency"]["legend"].(map[string]any)["1"] == nil {
 		t.Errorf("urgency = %v", wire.Answers["urgency"])
+	}
+	if spot := wire.Answers["spot"]; spot["type"] != "box" || spot["confidence"] != nil || len(spot["box"].(map[string]any)) != 4 {
+		t.Errorf("spot = %v", spot)
 	}
 	if got := slices.Sorted(maps.Keys(wire.Usage)); !slices.Equal(got, []string{"input_tokens", "output_tokens"}) {
 		t.Errorf("usage keys = %v", got)

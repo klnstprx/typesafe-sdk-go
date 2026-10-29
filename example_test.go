@@ -137,7 +137,7 @@ func ExampleAPIError() {
 	)
 	defer client.Close()
 
-	_, err := client.SystemOne(context.Background(), "hello", typesafe.Questions{"spam": typesafe.Noul{}},
+	_, err := client.SystemOne(context.Background(), "hello", typesafe.Questions{"spam": typesafe.Noul{Instructions: "Is this spam?"}},
 		typesafe.WithHeader("X-Demo", "rate-limit"))
 	var apiErr *typesafe.APIError
 	if errors.As(err, &apiErr) {

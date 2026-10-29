@@ -54,11 +54,50 @@ func main() {
 }
 ```
 
-Use `Noul` for yes/no questions, `Choice` for labels, and `Score` for ordered
-rubrics. State and question descriptions accept JSON strings, objects, or
-arrays, including Go structs and maps. See [systemone](examples/systemone) for
-all three question types and [structuredstate](examples/structuredstate) for
+Use `Noul` for yes/no questions, `Choice` for labels, `Score` for ordered
+rubrics, and `Box` to locate something in an image (see [Images](#images)). State and question descriptions accept JSON strings, objects, or
+arrays, including Go structs and maps. A `Noul` needs instructions or at least
+one described outcome, and `Choice` and `Score` need non-empty criteria; invalid
+questions fail before any network I/O. See [systemone](examples/systemone) for
+the text question types and [structuredstate](examples/structuredstate) for
 structured input.
+
+## Images
+
+Create an image from PNG or JPEG file bytes with `NewImage`, or from base64
+text with `ImageFromBase64`, and place it anywhere in state, instructions, or
+criteria. Image support is experimental: the API requires the
+`TypeSafe-Danger-Zone-Images: true` header, and `jev-preview` is the model for
+`Box` questions.
+
+```go
+client, err := typesafe.New(typesafe.WithHeader("TypeSafe-Danger-Zone-Images", "true"))
+// ...
+data, err := os.ReadFile("returns/RMA-1042.jpg")
+if err != nil {
+	return err
+}
+photo, err := typesafe.NewImage(data)
+if err != nil {
+	return err
+}
+resp, err := client.SystemOne(ctx, map[string]any{"claim": "The rim is chipped.", "photo": photo},
+	typesafe.Questions{
+		"damage":  typesafe.Box{Instructions: "The damaged area of the product"},
+		"matches": typesafe.Noul{Instructions: fmt.Sprintf("Does %s match the claim?", photo)},
+	},
+	typesafe.WithModel("jev-preview"))
+```
+
+An image is sent once per request, however often it appears, as
+`multipart/form-data` with its bytes in its own part. In text, an image is
+written as its reference, `photo.String()`. Images placed in the request are
+found through exported fields, maps, slices, pointers, and interfaces. When text
+refers to an image that is not placed, pass it with `WithImages(photo)`. A
+reference the call has no image for fails before any network I/O rather than
+reaching the model as plain text. `CreateSystemOne` is the exception: it sends
+such a reference as text, because a request a proxy decodes holds no images
+and its text is the client's data. See [images](examples/images).
 
 ## Configuration
 
@@ -77,8 +116,9 @@ Explicit options override environment values. Model, timeout, retry, and header
 options also work per call. `WithExtraBody` adds or overrides top-level fields
 in a `SystemOne` request.
 
-Clients created with `New` are safe for concurrent calls. Keep referenced inputs
-unchanged during calls. `WithHTTPClient` shares your client's transport and
+Clients created with `New` are safe for concurrent calls. Their private
+transport keeps up to 100 idle connections for 30s, so bursts of concurrent
+calls reuse them. Keep referenced inputs unchanged during calls. `WithHTTPClient` shares your client's transport and
 cookie jar without mutating the client or closing its transport; its timeout
 applies unless overridden by `WithTimeout`.
 
@@ -102,8 +142,11 @@ questions, not model defaults. An omitted or empty request model uses the client
 default. A non-empty request model overrides it; per-call `WithModel` overrides
 the request, including an explicit empty string. `WithExtraBody` retains its
 existing final override behavior. The original `SystemOne` method is unchanged.
+A request's `Assets` map placeholders to images given as `Format` and
+`DataBase64`; they are forwarded as JSON and replace any images the call would
+add, as an `"assets"` field in `WithExtraBody` does.
 
-`Questions.UnmarshalJSON` selects `Noul`, `Choice`, or `Score`; unknown types
+`Questions.UnmarshalJSON` selects `Noul`, `Choice`, `Score`, or `Box`; unknown types
 become `RawQuestion`. Structured question content uses `json.Number` to preserve
 large integers; state remains `json.RawMessage`. Unknown fields are ignored for
 known questions. `DisallowUnknownFields` on an outer decoder only restricts the
@@ -135,7 +178,8 @@ See [retrypolicy](examples/retrypolicy) for customization.
 
 ## Responses
 
-`Answers` contains `NoulAnswer`, `ChoiceAnswer`, and `ScoreAnswer` values.
+`Answers` contains `NoulAnswer`, `ChoiceAnswer`, `ScoreAnswer`, and `BoxAnswer`
+values; `Nouls()`, `Choices()`, `Scores()`, and `Boxes()` select one type.
 Always check that each answer you use exists and has the expected type: unknown
 answer types are skipped. Validation checks required fields and types, not
 probability ranges or sums.
@@ -185,7 +229,7 @@ go test -race ./...
 (cd testdata/consumer && go test ./...)
 ```
 
-Tests use checked-in Python SDK 0.7.2 parity fixtures, the vendored OpenAPI
+Tests use checked-in Python SDK 0.7.5 parity fixtures, the vendored OpenAPI
 schema, and fuzz regression seeds; no API key or external network is needed.
 See [parity documentation](testdata/parity/README.md) for regeneration and
 [CI](.github/workflows/ci.yml) for the platform matrix and fuzz runs.

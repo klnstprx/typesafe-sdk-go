@@ -1,12 +1,15 @@
 # Python parity fixtures
 
-`python-0.7.2.json` records how the official Python SDK, version 0.7.2 at
-commit `f078f1e208a0d885154dc758344ae4fce77ac168`, handles a fixed set of
+`python-0.7.5.json` records how the official Python SDK, version 0.7.5 at
+commit `f36e68549ceca3191e5791e5f99ea1baa1a258b5`, handles a fixed set of
 inputs:
 
 - response bodies: successes, missing and null fields, unknown answer types,
   validation paths, and API error messages
 - request encoding: state, questions, models, extra body fields, and headers
+- images: where placed and referenced images are found, the multipart body,
+  and image constructors. Images come from a table by index, and their random
+  references and multipart boundaries are normalized on both sides
 - retries: attempt counts and `X-TypeSafe-Retry-Count` headers
 - `Retry-After` and `retry-after-ms` parsing
 - API key validation
@@ -35,7 +38,7 @@ from a checkout of the Python SDK at the pinned commit (requires `uv`):
 
 ```sh
 git clone https://github.com/typesafe-ai/typesafe-sdk-python ../typesafe-sdk-python
-git -C ../typesafe-sdk-python checkout f078f1e208a0d885154dc758344ae4fce77ac168
+git -C ../typesafe-sdk-python checkout f36e68549ceca3191e5791e5f99ea1baa1a258b5
 testdata/parity/regenerate.sh ../typesafe-sdk-python
 ```
 

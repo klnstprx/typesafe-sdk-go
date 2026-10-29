@@ -14,10 +14,16 @@ import (
 // CreateSystemOne; call options take precedence over Model.
 // JSON decoding ignores unknown fields. Use Validate to check a decoded request
 // before using it without a client call. CreateSystemOne validates automatically.
+//
+// Assets, if non-nil, maps each placeholder that appears in the request's
+// strings to the image that replaces it. CreateSystemOne sends the request as
+// JSON, so each asset needs Format and DataBase64. Assets replace any images
+// the call would add.
 type SystemOneRequest struct {
-	State     json.RawMessage `json:"state"`
-	Model     string          `json:"model"`
-	Questions Questions       `json:"questions"`
+	State     json.RawMessage  `json:"state"`
+	Model     string           `json:"model"`
+	Questions Questions        `json:"questions"`
+	Assets    map[string]Asset `json:"assets,omitempty"`
 }
 
 // systemOneBody holds questions after validation and encoding. Keeping the
@@ -26,26 +32,37 @@ type systemOneBody struct {
 	State     json.RawMessage            `json:"state"`
 	Model     string                     `json:"model"`
 	Questions map[string]json.RawMessage `json:"questions"`
+	Assets    map[string]Asset           `json:"assets,omitempty"`
 }
 
-// Validate checks state and questions using the same rules as SystemOne.
-// It does not resolve or require a model; model defaults belong to the client.
+// Validate checks state and questions using the same rules as SystemOne, and
+// that Assets, if non-nil, is non-empty with non-blank placeholders. It does
+// not resolve or require a model; model defaults belong to the client.
 func (r SystemOneRequest) Validate() error {
 	if _, err := encodeContent(r.State, "state"); err != nil {
 		return err
 	}
-	_, err := normalizeQuestions(r.Questions)
-	return err
+	if _, err := normalizeQuestions(r.Questions); err != nil {
+		return err
+	}
+	return validateAssets(r.Assets)
 }
 
 // CreateSystemOne sends a decoded or constructed request. A non-empty request
 // Model overrides the client default; WithModel overrides either, even when
-// explicitly empty. Other options and response behavior match SystemOne.
+// explicitly empty. Other options and response behavior match SystemOne,
+// except that text referring to an image the call was not given is sent as
+// plain text: a decoded request holds no [Image], so a reference in its text
+// is the client's data. Images the call has are sent as in SystemOne.
 func (c *Client) CreateSystemOne(ctx context.Context, req SystemOneRequest, opts ...CallOption) (*SystemOneResponse, error) {
 	if req.Model != "" {
 		opts = append([]CallOption{WithModel(req.Model)}, opts...)
 	}
-	return c.SystemOne(ctx, req.State, req.Questions, opts...)
+	r, err := c.prepareSystemOne(req.State, req.Questions, req.Assets, false, opts)
+	if err != nil {
+		return nil, err
+	}
+	return sendSystemOne[SystemOneResponse](ctx, c, r)
 }
 
 // SystemOne answers the named questions about state, which must encode to a
@@ -56,6 +73,12 @@ func (c *Client) CreateSystemOne(ctx context.Context, req SystemOneRequest, opts
 // Otherwise the error is an *[APIError], *[ResponseValidationError],
 // *[ConnectionError], or *[TimeoutError] from the last attempt, or the caller's
 // context error during a retry wait. Use [errors.Is] to detect cancellation.
+//
+// Images placed in state or questions are sent with the request as
+// multipart/form-data; see [Image]. Text that refers to an image the call was
+// not given, such as a formatted reference without [WithImages], fails before
+// any network I/O.
+//
 // State and questions remain caller-owned; do not mutate referenced values
 // while the call runs. The request is encoded once and reused across retries.
 //
@@ -82,12 +105,16 @@ func (c *Client) SystemOne(ctx context.Context, state any, questions Questions, 
 // the per-attempt timeout does not bound this processing. Embed [ResponseMeta]
 // by value in T to receive the request ID, headers, and raw body.
 func SystemOneAs[T any](ctx context.Context, c *Client, state any, questions Questions, opts ...CallOption) (*T, error) {
-	req, err := c.prepareSystemOne(state, questions, opts)
+	req, err := c.prepareSystemOne(state, questions, nil, true, opts)
 	if err != nil {
 		return nil, err
 	}
+	return sendSystemOne[T](ctx, c, req)
+}
+
+func sendSystemOne[T any](ctx context.Context, c *Client, req *request) (*T, error) {
 	var out *T
-	err = c.send(ctx, req, func(resp *http.Response, raw []byte) error {
+	err := c.send(ctx, req, func(resp *http.Response, raw []byte) error {
 		t := new(T)
 		if r, ok := any(t).(*SystemOneResponse); ok {
 			decoded, err := c.decodeSystemOne(ctx, raw)
@@ -119,7 +146,11 @@ func (c *Client) decodeSystemOne(ctx context.Context, raw []byte) (*SystemOneRes
 	return decodeSystemOne(raw, func(name, typ string) { c.logUnknownAnswer(ctx, name, typ) })
 }
 
-func (c *Client) prepareSystemOne(state any, questions Questions, opts []CallOption) (*request, error) {
+// prepareSystemOne encodes the request body once. Unless the caller supplies
+// assets, in the request or in WithExtraBody, images referred to in the body
+// are added and the body becomes multipart. failClosed rejects references to
+// images the call does not have.
+func (c *Client) prepareSystemOne(state any, questions Questions, assets map[string]Asset, failClosed bool, opts []CallOption) (*request, error) {
 	o := resolveCallOptions(opts)
 	stateJSON, err := encodeContent(state, "state")
 	if err != nil {
@@ -129,13 +160,19 @@ func (c *Client) prepareSystemOne(state any, questions Questions, opts []CallOpt
 	if err != nil {
 		return nil, err
 	}
+	if err := validateAssets(assets); err != nil {
+		return nil, err
+	}
 	model := c.cfg.model
 	if o.model != nil {
 		model = *o.model
 	}
-	var body any = systemOneBody{State: stateJSON, Model: model, Questions: qs}
+	var body any = systemOneBody{State: stateJSON, Model: model, Questions: qs, Assets: assets}
 	if o.extraBody != nil {
 		merged := map[string]any{"state": stateJSON, "model": model, "questions": qs}
+		if assets != nil {
+			merged["assets"] = assets
+		}
 		maps.Copy(merged, o.extraBody)
 		body = merged
 	}
@@ -143,7 +180,19 @@ func (c *Client) prepareSystemOne(state any, questions Questions, opts []CallOpt
 	if err != nil {
 		return nil, fmt.Errorf("typesafe: the request body could not be encoded as JSON: %w", err)
 	}
-	return c.prepare(http.MethodPost, systemOnePath, b, o)
+	contentType := jsonContentType
+	if _, extraAssets := o.extraBody["assets"]; assets == nil && !extraAssets {
+		images, err := referencedImages(b, failClosed, o.images, state, questions, o.extraBody)
+		if err != nil {
+			return nil, err
+		}
+		if len(images) > 0 {
+			if b, contentType, err = withImages(b, images); err != nil {
+				return nil, fmt.Errorf("typesafe: the request body could not be encoded: %w", err)
+			}
+		}
+	}
+	return c.prepare(http.MethodPost, systemOnePath, b, contentType, o)
 }
 
 // newValidationError describes an invalid 2xx body. cause is a *pathError from

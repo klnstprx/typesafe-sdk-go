@@ -53,7 +53,7 @@ func TestSystemOneAsDecodes(t *testing.T) {
 func TestSystemOneAsSDKType(t *testing.T) {
 	c := fakeClient(t, newFake(ok(fullBody)))
 	resp, err := SystemOneAs[SystemOneResponse](bg, c, "x", spamQuestion)
-	if err != nil || len(resp.Answers) != 3 || resp.RawHTTPResponse() == nil {
+	if err != nil || len(resp.Answers) != 5 || resp.RawHTTPResponse() == nil {
 		t.Fatalf("resp = %+v, err = %v", resp, err)
 	}
 	c = fakeClient(t, newFake(ok(`{"model":"m"}`)), noRetry())

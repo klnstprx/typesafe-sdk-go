@@ -12,14 +12,17 @@ type ModelsService struct {
 }
 
 // List returns the models available to the account. Pass a returned name to
-// [WithModel]. [WithExtraBody] is rejected.
+// [WithModel]. [WithExtraBody] and [WithImages] are rejected.
 func (s *ModelsService) List(ctx context.Context, opts ...CallOption) (*ListModelsResponse, error) {
 	c := s.client
 	o := resolveCallOptions(opts)
 	if o.extraBody != nil {
 		return nil, errors.New("typesafe: WithExtraBody is not supported by Models.List")
 	}
-	req, err := c.prepare(http.MethodGet, modelsPath, nil, o)
+	if o.images != nil {
+		return nil, errors.New("typesafe: WithImages is not supported by Models.List")
+	}
+	req, err := c.prepare(http.MethodGet, modelsPath, nil, "", o)
 	if err != nil {
 		return nil, err
 	}

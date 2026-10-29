@@ -29,10 +29,12 @@
   "summary": "Some client-side messages name Go types or options instead of Python ones.",
   "reason": "Python's text refers to Python constructs (api_key=, dictionaries, pydantic validation); Go's names the Go equivalents. Both reject the input before any network I/O.",
   "cases": {
-   "requests/raw no type": {"error": {"message": "question \"x\" must be a Noul, Choice, Score, or RawQuestion with a non-empty string \"type\""}},
-   "requests/raw empty type": {"error": {"message": "question \"x\" must be a Noul, Choice, Score, or RawQuestion with a non-empty string \"type\""}},
-   "requests/raw number type": {"error": {"message": "question \"x\" must be a Noul, Choice, Score, or RawQuestion with a non-empty string \"type\""}},
+   "requests/score empty criteria": {"error": {"message": "score question \"urgency\" has no criteria; at least one score is required"}},
+   "requests/raw no type": {"error": {"message": "question \"x\" must be a Noul, Choice, Score, Box, or RawQuestion with a non-empty string \"type\""}},
+   "requests/raw empty type": {"error": {"message": "question \"x\" must be a Noul, Choice, Score, Box, or RawQuestion with a non-empty string \"type\""}},
+   "requests/raw number type": {"error": {"message": "question \"x\" must be a Noul, Choice, Score, Box, or RawQuestion with a non-empty string \"type\""}},
    "requests/noul number instructions": {"error": {"message": "noul question \"q\" instructions must encode to a JSON string, object, or array"}},
+   "requests/box number instructions": {"error": {"message": "box question \"q\" instructions must encode to a JSON string, object, or array"}},
    "api_keys/\"\"": {"message": "no API key was provided; pass WithAPIKey or set the TYPESAFE_API_KEY environment variable"},
    "api_keys/\"   \"": {"message": "no API key was provided; pass WithAPIKey or set the TYPESAFE_API_KEY environment variable"}
   }
@@ -80,8 +82,8 @@
  {
   "id": "non-finite-json",
   "kind": "override",
-  "summary": "Go rejects NaN and Infinity literals in a response; Python accepts them.",
-  "reason": "pydantic-core parses these non-standard literals by default. They are not JSON (RFC 8259), and a NaN probability is meaningless, so Go fails closed with a validation error for the whole body.",
+  "summary": "Go rejects NaN and Infinity literals in a response as invalid JSON; Python parses them and then rejects the field.",
+  "reason": "pydantic-core parses these non-standard literals, so Python reports the field holding one. They are not JSON (RFC 8259) and encoding/json cannot parse them, so Go reports the whole body as invalid and keeps it as raw text.",
   "cases": {
    "responses/noul NaN literal": {
     "ok": false, "result": null,
@@ -92,6 +94,17 @@
      "body": "{\"model\":\"m\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"answers\":{\"n\":{\"type\":\"noul\",\"noul\":NaN}}}"
     }
    }
+  }
+ },
+ {
+  "id": "non-finite-request",
+  "kind": "override",
+  "summary": "Go rejects NaN and infinities in request content; Python sends them as strings or null.",
+  "reason": "Python 0.7.4 sends them as \"NaN\", \"Infinity\", and \"-Infinity\" in state and extra body, but as null inside question content. encoding/json rejects them, and silently turning a number into a string or null would change what the model sees, so Go fails before any network I/O as it did before.",
+  "cases": {
+   "requests/non-finite state": {"ok": false, "request": null, "error": {"message": "the request body could not be encoded as JSON: state: json: unsupported value: +Inf"}, "requests_sent": 0},
+   "requests/non-finite instructions": {"ok": false, "request": null, "error": {"message": "the request body could not be encoded as JSON: noul question \"q\" instructions: json: unsupported value: NaN"}, "requests_sent": 0},
+   "requests/non-finite extra body": {"ok": false, "request": null, "error": {"message": "the request body could not be encoded as JSON: json: unsupported value: +Inf"}, "requests_sent": 0}
   }
  },
  {
@@ -121,10 +134,41 @@
   }
  },
  {
+  "id": "image-reference-fails-closed",
+  "kind": "override",
+  "summary": "Text that refers to an image the call was not given fails before sending in Go's SystemOne and SystemOneAs; Python sends the reference as plain text, as Go's CreateSystemOne does.",
+  "reason": "A reference without its image is almost always a forgotten WithImages (Python: attach_assets), or an image behind an unexported field the SDK cannot see; sending the reference as text would silently drop the image. The JS SDK (@typesafe-ai/sdk 0.7.0) rejects such references the same way. CreateSystemOne keeps Python's behavior because proxies send it decoded requests, which hold no Image, so a reference in their text is the client's data.",
+  "cases": {
+   "requests/text reference not attached": {"ok": false, "request": null, "requests_sent": 0, "error": {"message": "image reference \"<image:0>\" has no Image in the call; pass the Image with WithImages"}},
+   "requests/lookalike reference": {"ok": false, "request": null, "requests_sent": 0, "error": {"message": "image reference \"<image:0123456789abcdef0123456789abcdef>\" has no Image in the call; pass the Image with WithImages"}}
+  }
+ },
+ {
+  "id": "eager-image-validation",
+  "kind": "override",
+  "summary": "NewImage rejects empty data when the image is created; Python checks it when a call first sends the image.",
+  "reason": "Go constructors return errors, so an invalid Image never exists. Python reads path-backed images lazily, which Go does not offer (see image-api).",
+  "cases": {
+   "image_inputs/bytes empty": {"error": {"message": "image data is empty"}}
+  }
+ },
+ {
   "id": "optional-release-date",
   "kind": "note",
-  "summary": "Go accepts a model entry whose release_date is absent or null and reports it as \"\"; Python 0.7.2 rejects the list.",
+  "summary": "Go accepts a model entry whose release_date is absent or null and reports it as \"\"; Python 0.7.5 rejects the list.",
   "reason": "llama-server SystemOne servers (0.7.0, build 11669) return GET /v1/models entries without release_date, so a required field would make their model list unreadable. A present non-string release_date is still a validation error, as in Python. The OpenAPI spec still lists release_date as required; openapi_test.go records it in decoderTolerates. The fixture has no case without release_date."
+ },
+ {
+  "id": "zstd-compression",
+  "kind": "note",
+  "summary": "Go sends request bodies uncompressed; Python 0.7.5 compresses bodies of 1 KiB or more with zstd by default.",
+  "reason": "The Go standard library has no zstd encoder and the module has no third-party dependencies. The API accepts uncompressed bodies. The generator disables compression so that request bodies stay comparable."
+ },
+ {
+  "id": "image-api",
+  "kind": "note",
+  "summary": "Go offers NewImage, ImageFromBase64, and a per-call WithImages; Python also has path and Pillow constructors, an alias map (assets=), and the client-scoped attach_assets block.",
+  "reason": "os.ReadFile plus NewImage reads a file without non-cancellable I/O inside a call, and Pillow has no Go counterpart. A call option is Go's scope for attaching images and cannot leak between goroutines; the parity cases map attach to WithImages. Aliases are text: strings.ReplaceAll(prompt, \"<photo>\", img.String()) does what assets= does, and proxies forward wire aliases through SystemOneRequest.Assets. Image is a value type, so an Image held by value in a struct still encodes as its reference."
  },
  {
   "id": "request-json-encoding",

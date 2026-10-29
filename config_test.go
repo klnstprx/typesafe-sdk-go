@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
@@ -288,6 +291,59 @@ func TestCloseOwnership(t *testing.T) {
 			t.Errorf("List after Close: %v", err)
 		}
 	})
+}
+
+func TestOwnedTransportPoolsConcurrentConnections(t *testing.T) {
+	// A burst of concurrent calls leaves its connections idle for the next
+	// burst; net/http's default keeps only two per host and closes the rest.
+	const burst = 8
+	var (
+		opened  atomic.Int32
+		mu      sync.Mutex
+		waiting []chan struct{}
+	)
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Hold every reply until the whole burst is in flight, so each call needs its own connection.
+		release := make(chan struct{})
+		mu.Lock()
+		if waiting = append(waiting, release); len(waiting) == burst {
+			for _, ch := range waiting {
+				close(ch)
+			}
+			waiting = nil
+		}
+		mu.Unlock()
+		<-release
+		writeJSON(w, 200, okBody)
+	}))
+	srv.Config.ConnState = func(_ net.Conn, s http.ConnState) {
+		if s == http.StateNew {
+			opened.Add(1)
+		}
+	}
+	srv.Start()
+	t.Cleanup(srv.Close)
+	clearEnv(t)
+	c, err := New(WithAPIKey(testKey), WithBaseURL(srv.URL))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = c.Close() })
+
+	for range 2 {
+		var wg sync.WaitGroup
+		for range burst {
+			wg.Go(func() {
+				if _, err := c.SystemOne(bg, "x", spamQuestion); err != nil {
+					t.Error(err)
+				}
+			})
+		}
+		wg.Wait()
+	}
+	if n := opened.Load(); n != burst {
+		t.Errorf("opened %d connections for two bursts of %d calls; want %d", n, burst, burst)
+	}
 }
 
 func TestSafeFormatting(t *testing.T) {

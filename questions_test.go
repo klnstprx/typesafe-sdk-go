@@ -16,15 +16,20 @@ func TestQuestionWireJSON(t *testing.T) {
 		q    Question
 		want string
 	}{
-		{"empty noul", Noul{}, `{"type":"noul"}`},
 		{"noul empty string kept", Noul{Instructions: ""}, `{"type":"noul","instructions":""}`},
 		{"noul criteria", Noul{Instructions: "Spam?", Criteria: &NoulCriteria{True: "ads"}}, `{"type":"noul","instructions":"Spam?","criteria":{"true":"ads"}}`},
-		{"noul empty criteria", Noul{Criteria: &NoulCriteria{}}, `{"type":"noul","criteria":{}}`},
+		{"noul criteria only", Noul{Criteria: &NoulCriteria{False: "ham"}}, `{"type":"noul","criteria":{"false":"ham"}}`},
 		{"noul structured", Noul{Instructions: map[string]any{"task": "x", "n": nil}}, `{"type":"noul","instructions":{"n":null,"task":"x"}}`},
 		{"choice", Choice{Instructions: "Tone?", Criteria: map[string]any{"calm": nil, "angry": "upset"}}, `{"type":"choice","instructions":"Tone?","criteria":{"angry":"upset","calm":null}}`},
-		{"choice empty map kept", Choice{Criteria: map[string]any{}}, `{"type":"choice","criteria":{}}`},
 		{"score", Score{Criteria: []any{"low", rubric{"high"}, []any{1, nil}}}, `{"type":"score","criteria":["low",{"level":"high"},[1,null]]}`},
+		{"box empty", Box{}, `{"type":"box"}`},
+		{"box", Box{Instructions: "The dog"}, `{"type":"box","instructions":"The dog"}`},
+		{"box structured", &Box{Instructions: []any{"dog", nil}}, `{"type":"box","instructions":["dog",null]}`},
 		{"raw verbatim", RawQuestion{"type": "future", "extra": []any{nil}}, `{"extra":[null],"type":"future"}`},
+		{"raw box", RawQuestion{"type": "box"}, `{"type":"box"}`},
+		{"raw noul criteria only", RawQuestion{"type": "noul", "criteria": map[string]any{"false": "no"}}, `{"criteria":{"false":"no"},"type":"noul"}`},
+		{"raw noul struct criteria", RawQuestion{"type": "noul", "criteria": NoulCriteria{True: "yes"}}, `{"criteria":{"true":"yes"},"type":"noul"}`},
+		{"raw noul null criteria", RawQuestion{"type": "noul", "instructions": "?", "criteria": nil}, `{"criteria":null,"instructions":"?","type":"noul"}`},
 		{"pointer", &Noul{Instructions: "x"}, `{"type":"noul","instructions":"x"}`},
 		{"raw json", Noul{Instructions: json.RawMessage(` {"a": 1}`)}, `{"type":"noul","instructions":{"a":1}}`},
 		{"no html escaping", Noul{Instructions: "a<b>&c"}, `{"type":"noul","instructions":"a<b>&c"}`},
@@ -61,7 +66,11 @@ func TestMarshalRejectsWhatSendingRejects(t *testing.T) {
 	for name, q := range map[string]Question{
 		"score without criteria":  Score{},
 		"choice without criteria": Choice{Instructions: "?"},
+		"choice empty criteria":   Choice{Criteria: map[string]any{}},
+		"empty noul":              Noul{},
+		"noul nil outcomes":       Noul{Criteria: &NoulCriteria{}},
 		"number instructions":     Noul{Instructions: 5},
+		"box number instructions": Box{Instructions: 5},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if b, err := json.Marshal(q); err == nil {
@@ -82,6 +91,15 @@ func TestQuestionValidationErrors(t *testing.T) {
 		{"nil question", Questions{"x": nil}, `question "x" must be`},
 		{"score empty", Questions{"urgency": Score{}}, `score question "urgency" has no criteria; at least one score is required`},
 		{"choice nil criteria", Questions{"x": Choice{}}, `question "x" requires "criteria"`},
+		{"choice empty criteria", Questions{"q": Choice{Criteria: map[string]any{}}}, `choice question "q" has no criteria; at least one choice is required`},
+		{"empty noul", Questions{"q": Noul{}}, `noul question "q" has neither instructions nor criteria; at least one is required`},
+		{"noul nil outcomes", Questions{"q": &Noul{Criteria: &NoulCriteria{}}}, `noul question "q" has neither instructions nor criteria`},
+		{"raw noul empty", Questions{"q": RawQuestion{"type": "noul"}}, `noul question "q" has neither instructions nor criteria`},
+		{"raw noul null outcomes", Questions{"q": RawQuestion{"type": "noul", "instructions": nil, "criteria": map[string]any{"true": nil}}}, `noul question "q" has neither instructions nor criteria`},
+		{"raw noul string criteria", Questions{"q": RawQuestion{"type": "noul", "instructions": "?", "criteria": "yes"}}, `noul question "q" criteria must be an object`},
+		{"raw noul array criteria", Questions{"q": RawQuestion{"type": "noul", "instructions": "?", "criteria": []any{"yes"}}}, `noul question "q" criteria must be an object`},
+		{"raw choice empty criteria", Questions{"u": RawQuestion{"type": "choice", "criteria": map[string]any{}}}, `choice question "u" has no criteria; at least one choice is required`},
+		{"raw choice null criteria", Questions{"u": RawQuestion{"type": "choice", "criteria": nil}}, `choice question "u" has no criteria`},
 		{"raw no type", Questions{"x": RawQuestion{"instructions": "?"}}, `question "x" must be`},
 		{"raw empty type", Questions{"x": RawQuestion{"type": ""}}, `question "x" must be`},
 		{"raw non-string type", Questions{"x": RawQuestion{"type": 1}}, `question "x" must be`},
@@ -95,6 +113,8 @@ func TestQuestionValidationErrors(t *testing.T) {
 		{"raw score empty string criteria", Questions{"u": RawQuestion{"type": "score", "criteria": ""}}, `score question "u" has no criteria`},
 		{"number instructions", Questions{"x": Noul{Instructions: 5}}, `question "x" instructions must encode to a JSON string, object, or array`},
 		{"bool criteria", Questions{"x": Noul{Criteria: &NoulCriteria{False: true}}}, `must encode to a JSON string, object, or array`},
+		{"box number instructions", Questions{"x": Box{Instructions: 5}}, `box question "x" instructions must encode to a JSON string, object, or array`},
+		{"nil box pointer", Questions{"x": (*Box)(nil)}, `question "x" must be`},
 		{"nil score item", Questions{"x": Score{Criteria: []any{"a", nil}}}, `question "x" criteria[1] must encode`},
 		{"number choice label", Questions{"x": Choice{Criteria: map[string]any{"a": 1.5}}}, `criteria "a" must encode`},
 		{"unencodable", Questions{"x": Noul{Instructions: map[string]any{"f": math.Inf(1)}}}, "could not be encoded as JSON"},
@@ -114,13 +134,15 @@ func TestQuestionValidationErrors(t *testing.T) {
 	}
 }
 
-func TestRawScoreTruthyCriteriaPassThrough(t *testing.T) {
+func TestRawTruthyCriteriaPassThrough(t *testing.T) {
 	// Python only rejects falsy criteria; other values reach the server, which validates them.
-	for _, criteria := range []any{true, 1, 0.5, "x", []any{"a"}} {
-		f := newFake(ok(okBody))
-		c := fakeClient(t, f)
-		if _, err := c.SystemOne(bg, "x", Questions{"u": RawQuestion{"type": "score", "criteria": criteria}}); err != nil || f.count() != 1 {
-			t.Errorf("criteria %#v: err = %v, sent %d", criteria, err, f.count())
+	for _, typ := range []string{"score", "choice"} {
+		for _, criteria := range []any{true, 1, 0.5, "x", []any{"a"}} {
+			f := newFake(ok(okBody))
+			c := fakeClient(t, f)
+			if _, err := c.SystemOne(bg, "x", Questions{"u": RawQuestion{"type": typ, "criteria": criteria}}); err != nil || f.count() != 1 {
+				t.Errorf("%s criteria %#v: err = %v, sent %d", typ, criteria, err, f.count())
+			}
 		}
 	}
 }
@@ -130,14 +152,14 @@ func TestRequestBody(t *testing.T) {
 		t.Helper()
 		f := newFake(ok(okBody))
 		c := fakeClient(t, f, WithModel("m"))
-		if _, err := c.SystemOne(bg, state, Questions{"q": Noul{}}, opts...); err != nil {
+		if _, err := c.SystemOne(bg, state, Questions{"q": Noul{Instructions: "?"}}, opts...); err != nil {
 			t.Fatal(err)
 		}
 		return string(f.all()[0].Body)
 	}
 	t.Run("order state model questions", func(t *testing.T) {
 		got := send(t, "hi")
-		if want := `{"state":"hi","model":"m","questions":{"q":{"type":"noul"}}}`; got != want {
+		if want := `{"state":"hi","model":"m","questions":{"q":{"type":"noul","instructions":"?"}}}`; got != want {
 			t.Errorf("body = %s, want %s", got, want)
 		}
 	})
@@ -148,13 +170,13 @@ func TestRequestBody(t *testing.T) {
 			Extra   any    `json:"extra"`
 		}
 		got := send(t, msg{"dup", []any{nil, 1}, nil})
-		if want := `{"state":{"subject":"dup","tags":[null,1],"extra":null},"model":"m","questions":{"q":{"type":"noul"}}}`; got != want {
+		if want := `{"state":{"subject":"dup","tags":[null,1],"extra":null},"model":"m","questions":{"q":{"type":"noul","instructions":"?"}}}`; got != want {
 			t.Errorf("body = %s", got)
 		}
 	})
 	t.Run("extra body shallow merge keeps nulls", func(t *testing.T) {
 		got := send(t, "hi", WithExtraBody(map[string]any{"state": map[string]any{"a": 1}, "trace": nil}), WithExtraBody(map[string]any{"debug": true}))
-		if want := `{"debug":true,"model":"m","questions":{"q":{"type":"noul"}},"state":{"a":1},"trace":null}`; got != want {
+		if want := `{"debug":true,"model":"m","questions":{"q":{"type":"noul","instructions":"?"}},"state":{"a":1},"trace":null}`; got != want {
 			t.Errorf("body = %s", got)
 		}
 	})

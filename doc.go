@@ -32,6 +32,14 @@
 //	}
 //	fmt.Println(billing.Noul, tone.Choice)
 //
+// # Images
+//
+// An [Image] placed in state, instructions, or criteria is sent with the
+// request, and a [Box] question locates something in it. Text that mentions
+// an image by its reference needs [WithImages] unless the image is also
+// placed. The API requires the TypeSafe-Danger-Zone-Images: true header for
+// images and box questions; set it with [WithHeader].
+//
 // # Timeouts and retries
 //
 // The caller's context bounds network I/O and retry waits across the whole call.
@@ -66,6 +74,8 @@
 //
 // # HTTP clients
 //
+// Without [WithHTTPClient], the SDK's private transport keeps up to 100 idle
+// connections for 30s, so bursts of concurrent calls reuse them.
 // [WithHTTPClient] uses a copy of the supplied client, so its transport can be
 // wrapped for tracing or metrics. The SDK never follows redirects and never
 // closes a supplied transport.

@@ -1,7 +1,7 @@
 package typesafe
 
 // Parity test against expectations generated from the Python SDK. Inputs and
-// Python's observed results live in testdata/parity/python-0.7.2.json; see
+// Python's observed results live in testdata/parity/python-0.7.5.json; see
 // testdata/parity/generate.py. Intentional differences are listed in
 // testdata/parity/differences.json and applied here: "normalize" entries map
 // Python's representation to Go's for every case, and "override" entries
@@ -9,23 +9,37 @@ package typesafe
 // for staleness, so a fixed or vanished difference fails the test.
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"maps"
 	"math"
+	"mime"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"reflect"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 	"unicode"
 	"unicode/utf8"
 )
+
+const (
+	parityPythonVersion = "0.7.5"
+	parityPythonCommit  = "f36e68549ceca3191e5791e5f99ea1baa1a258b5"
+)
+
+// parityProbe is a valid question for cases that exercise responses and
+// retries rather than request encoding.
+var parityProbe = Questions{"q": Noul{Instructions: "?"}}
 
 type parityFixture struct {
 	PythonSDK struct {
@@ -46,6 +60,7 @@ type parityFixture struct {
 	} `json:"responses"`
 	Requests []struct {
 		Name          string                    `json:"name"`
+		Attach        []int                     `json:"attach"`
 		Endpoint      string                    `json:"endpoint"`
 		State         json.RawMessage           `json:"state"`
 		Questions     map[string]map[string]any `json:"questions"`
@@ -64,6 +79,13 @@ type parityFixture struct {
 		Headers      map[string]string `json:"headers"`
 		Python       any               `json:"python"`
 	} `json:"retries"`
+	Images      []string `json:"images"` // base64 file bytes, referenced by index
+	ImageInputs []struct {
+		Name   string `json:"name"`
+		Kind   string `json:"kind"` // "bytes" (base64 of the bytes) or "base64" (ImageFromBase64 input)
+		Value  string `json:"value"`
+		Python any    `json:"python"`
+	} `json:"image_inputs"`
 	RetryAfter []struct {
 		Name     string            `json:"name"`
 		Headers  map[string]string `json:"headers"`
@@ -90,7 +112,7 @@ var parityNormalizers = map[string]func(section string, v any) any{
 	"error-types": func(section string, v any) any {
 		return walkObjects(v, func(m map[string]any) {
 			class, ok := m["class"].(string)
-			if !ok || section == "requests" || section == "api_keys" {
+			if !ok || isClientSection(section) {
 				return
 			}
 			if class == "TypeSafeAPIResponseValidationError" {
@@ -119,7 +141,7 @@ var parityNormalizers = map[string]func(section string, v any) any{
 		})
 	},
 	"client-error-wording": func(section string, v any) any {
-		if section != "requests" && section != "api_keys" {
+		if !isClientSection(section) {
 			return v
 		}
 		return walkObjects(v, func(m map[string]any) {
@@ -129,6 +151,12 @@ var parityNormalizers = map[string]func(section string, v any) any{
 			delete(m, "class")
 		})
 	},
+}
+
+// isClientSection reports whether a fixture section's errors are client-side
+// misuse errors, which have no HTTP details.
+func isClientSection(section string) bool {
+	return section == "requests" || section == "api_keys" || section == "image_inputs"
 }
 
 func walkObjects(v any, f func(map[string]any)) any {
@@ -192,7 +220,7 @@ func canonical(t *testing.T, v any) any {
 
 func loadParity(t *testing.T) (*parityFixture, []parityDifference) {
 	t.Helper()
-	raw, err := os.ReadFile("testdata/parity/python-0.7.2.json")
+	raw, err := os.ReadFile("testdata/parity/python-" + parityPythonVersion + ".json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +228,7 @@ func loadParity(t *testing.T) (*parityFixture, []parityDifference) {
 	if err := json.Unmarshal(raw, &fx); err != nil {
 		t.Fatal(err)
 	}
-	if fx.PythonSDK.Version != "0.7.2" || fx.PythonSDK.Commit != "f078f1e208a0d885154dc758344ae4fce77ac168" {
+	if fx.PythonSDK.Version != parityPythonVersion || fx.PythonSDK.Commit != parityPythonCommit {
 		t.Fatalf("fixture generated from %+v", fx.PythonSDK)
 	}
 	raw, err = os.ReadFile("testdata/parity/differences.json")
@@ -304,7 +332,7 @@ func parityCompare(t *testing.T, key string, got, want any) {
 	if !reflect.DeepEqual(got, want) {
 		g, _ := json.MarshalIndent(got, "", " ")
 		w, _ := json.MarshalIndent(want, "", " ")
-		t.Errorf("%s differs from Python 0.7.2\n--- go\n%s\n--- want (python, after documented differences)\n%s", key, g, w)
+		t.Errorf("%s differs from Python %s\n--- go\n%s\n--- want (python, after documented differences)\n%s", key, parityPythonVersion, g, w)
 	}
 }
 
@@ -383,7 +411,7 @@ func TestPythonParity(t *testing.T) {
 				}
 			} else {
 				var resp *SystemOneResponse
-				if resp, err = c.SystemOne(bg, "x", Questions{"q": Noul{}}); err == nil {
+				if resp, err = c.SystemOne(bg, "x", parityProbe); err == nil {
 					got["result"] = map[string]any{
 						"model":      resp.Model,
 						"usage":      resp.Usage,
@@ -393,6 +421,7 @@ func TestPythonParity(t *testing.T) {
 							"nouls":   append([]string{}, slices.Sorted(maps.Keys(resp.Nouls()))...),
 							"choices": append([]string{}, slices.Sorted(maps.Keys(resp.Choices()))...),
 							"scores":  append([]string{}, slices.Sorted(maps.Keys(resp.Scores()))...),
+							"boxes":   append([]string{}, slices.Sorted(maps.Keys(resp.Boxes()))...),
 						},
 					}
 				}
@@ -413,11 +442,8 @@ func TestPythonParity(t *testing.T) {
 	})
 
 	t.Run("requests", func(t *testing.T) {
-		ignored := map[string]bool{}
-		for _, h := range fx.IgnoredRequestHeaders {
-			ignored[h] = true
-		}
 		for _, tc := range fx.Requests {
+			images := parityImages(t, fx)
 			f := newFake(ok(okBody))
 			if tc.Endpoint == "models" {
 				f = newFake(ok(`{"models":[]}`))
@@ -435,10 +461,17 @@ func TestPythonParity(t *testing.T) {
 				callOpts = append(callOpts, WithModel(*tc.Model))
 			}
 			if tc.ExtraBody != nil {
-				callOpts = append(callOpts, WithExtraBody(tc.ExtraBody))
+				callOpts = append(callOpts, WithExtraBody(revive(tc.ExtraBody, images).(map[string]any)))
 			}
 			if tc.Headers != nil {
 				callOpts = append(callOpts, WithHeaders(headerOf(tc.Headers)))
+			}
+			if tc.Attach != nil {
+				var attached []Image
+				for _, i := range tc.Attach {
+					attached = append(attached, images[i])
+				}
+				callOpts = append(callOpts, WithImages(attached...))
 			}
 			var err error
 			if tc.Endpoint == "models" {
@@ -448,29 +481,34 @@ func TestPythonParity(t *testing.T) {
 				if err := json.Unmarshal(tc.State, &state); err != nil {
 					t.Fatal(err)
 				}
-				_, err = c.SystemOne(bg, state, parityQuestions(tc.Questions), callOpts...)
+				_, err = c.SystemOne(bg, revive(state, images), parityQuestions(tc.Questions, images), callOpts...)
 			}
-			got := map[string]any{"ok": err == nil}
-			if err != nil {
-				got["error"] = map[string]any{"message": clientErrorMessage(err)}
-				got["requests_sent"] = f.count()
-			} else {
-				r := f.all()[0]
-				headers := map[string]any{}
-				for k, vs := range r.Header {
-					if lk := strings.ToLower(k); !ignored[lk] {
-						headers[lk] = strings.Join(vs, ", ")
-					}
-				}
-				var body any
-				if len(r.Body) > 0 {
-					if err := json.Unmarshal(r.Body, &body); err != nil {
-						t.Fatal(err)
-					}
-				}
-				got["request"] = map[string]any{"method": r.Method, "path": r.Path, "body": body, "headers": headers}
-			}
+			got := describeParityCall(t, fx, f, err, images)
 			parityCompare(t, "requests/"+tc.Name, got, e.expect("requests", tc.Name, tc.Python))
+		}
+	})
+
+	t.Run("image_inputs", func(t *testing.T) {
+		for _, tc := range fx.ImageInputs {
+			var (
+				img Image
+				err error
+			)
+			if tc.Kind == "bytes" {
+				data, decodeErr := base64.StdEncoding.DecodeString(tc.Value)
+				if decodeErr != nil {
+					t.Fatal(decodeErr)
+				}
+				img, err = NewImage(data)
+			} else {
+				img, err = ImageFromBase64(tc.Value)
+			}
+			f := newFake(ok(okBody))
+			if err == nil {
+				_, err = parityClient(t, fx, f).SystemOne(bg, img, Questions{"q": Noul{Instructions: "Is this spam?"}})
+			}
+			got := describeParityCall(t, fx, f, err, []Image{img})
+			parityCompare(t, "image_inputs/"+tc.Name, got, e.expect("image_inputs", tc.Name, tc.Python))
 		}
 	})
 
@@ -497,7 +535,7 @@ func TestPythonParity(t *testing.T) {
 				opts = append(opts, WithHeaders(headerOf(tc.Headers)))
 			}
 			c := parityClient(t, fx, f, opts...)
-			_, err := c.SystemOne(bg, "x", Questions{"q": Noul{}})
+			_, err := c.SystemOne(bg, "x", parityProbe)
 			outcome := map[string]any{"ok": err == nil}
 			if err != nil {
 				outcome["error"] = describeParityError(err)
@@ -570,9 +608,151 @@ func headerOf(m map[string]string) http.Header {
 	return h
 }
 
-func parityQuestions(specs map[string]map[string]any) Questions {
+// revive replaces the generator's markers: {"$nonfinite": repr} with the NaN
+// or infinity that JSON cannot carry, {"$image": i} with images[i], and
+// {"$text": template} with the template's "{i}" replaced by images[i]'s
+// reference.
+func revive(v any, images []Image) any {
+	switch x := v.(type) {
+	case map[string]any:
+		if len(x) == 1 {
+			if repr, ok := x["$nonfinite"].(string); ok {
+				return map[string]float64{"nan": math.NaN(), "inf": math.Inf(1), "-inf": math.Inf(-1)}[repr]
+			}
+			if i, ok := x["$image"].(float64); ok {
+				return images[int(i)]
+			}
+			if text, ok := x["$text"].(string); ok {
+				for i, img := range images {
+					text = strings.ReplaceAll(text, "{"+strconv.Itoa(i)+"}", img.String())
+				}
+				return text
+			}
+		}
+		for k, e := range x {
+			x[k] = revive(e, images)
+		}
+	case []any:
+		for i, e := range x {
+			x[i] = revive(e, images)
+		}
+	}
+	return v
+}
+
+// parityImages creates fresh images from the fixture's image table.
+func parityImages(t *testing.T, fx *parityFixture) []Image {
+	t.Helper()
+	images := make([]Image, len(fx.Images))
+	for i, data := range parityImageData(t, fx) {
+		var err error
+		if images[i], err = NewImage(data); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return images
+}
+
+func parityImageData(t *testing.T, fx *parityFixture) [][]byte {
+	t.Helper()
+	out := make([][]byte, len(fx.Images))
+	for i, b64 := range fx.Images {
+		var err error
+		if out[i], err = base64.StdEncoding.DecodeString(b64); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return out
+}
+
+// describeParityCall renders a request case's outcome in the fixture's
+// schema: the error, or the request sent. A multipart body is described as
+// its JSON part plus each part's headers, with image parts identified by
+// their index in the image table. Image references become <image:i>.
+func describeParityCall(t *testing.T, fx *parityFixture, f *fakeTransport, err error, images []Image) any {
+	t.Helper()
+	got := map[string]any{"ok": err == nil}
+	if err != nil {
+		got["error"] = map[string]any{"message": clientErrorMessage(err)}
+		got["requests_sent"] = f.count()
+	} else {
+		ignored := map[string]bool{}
+		for _, h := range fx.IgnoredRequestHeaders {
+			ignored[h] = true
+		}
+		r := f.all()[0]
+		headers := map[string]any{}
+		for k, vs := range r.Header {
+			if lk := strings.ToLower(k); !ignored[lk] {
+				headers[lk] = strings.Join(vs, ", ")
+			}
+		}
+		request := map[string]any{"method": r.Method, "path": r.Path, "headers": headers}
+		jsonBody := r.Body
+		if mediaType, params, _ := mime.ParseMediaType(r.Header.Get("Content-Type")); mediaType == "multipart/form-data" {
+			headers["content-type"] = "multipart/form-data; boundary=BOUNDARY"
+			var parts []any
+			jsonBody, parts = describeParityParts(t, r.Body, params["boundary"], parityImageData(t, fx))
+			request["parts"] = parts
+		}
+		var body any
+		if len(jsonBody) > 0 {
+			if err := json.Unmarshal(jsonBody, &body); err != nil {
+				t.Fatal(err)
+			}
+		}
+		request["body"] = body
+		got["request"] = request
+	}
+	b, err := marshalJSON(got) // unescaped, so references match
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(b)
+	for i, img := range images {
+		if ref := img.String(); ref != "" {
+			text = strings.ReplaceAll(text, ref, "<image:"+strconv.Itoa(i)+">")
+		}
+	}
+	var out any
+	if err := json.Unmarshal([]byte(text), &out); err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+func describeParityParts(t *testing.T, body []byte, boundary string, table [][]byte) (request []byte, parts []any) {
+	t.Helper()
+	mr := multipart.NewReader(bytes.NewReader(body), boundary)
+	for {
+		p, err := mr.NextPart()
+		if err == io.EOF {
+			return request, parts
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := io.ReadAll(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		part := map[string]any{}
+		for k, vs := range p.Header {
+			part[strings.ToLower(k)] = strings.Join(vs, ", ")
+		}
+		if p.FormName() == "request" {
+			request = data
+		} else {
+			part["image"] = slices.IndexFunc(table, func(b []byte) bool { return bytes.Equal(b, data) })
+		}
+		parts = append(parts, part)
+	}
+}
+
+func parityQuestions(specs map[string]map[string]any, images []Image) Questions {
 	qs := Questions{}
 	for name, spec := range specs {
+		spec := revive(spec, images).(map[string]any)
 		if raw, ok := spec["raw"].(map[string]any); ok {
 			qs[name] = RawQuestion(raw)
 			continue
@@ -593,6 +773,8 @@ func parityQuestions(specs map[string]map[string]any) Questions {
 				c = []any{}
 			}
 			qs[name] = Score{Instructions: spec["instructions"], Criteria: c}
+		case "box":
+			qs[name] = Box{Instructions: spec["instructions"]}
 		}
 	}
 	return qs

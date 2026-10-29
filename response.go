@@ -85,7 +85,8 @@ type SystemOneResponse struct {
 	Model string `json:"model"`
 	// Usage reports token counts.
 	Usage Usage `json:"usage"`
-	// Answers maps question names to [NoulAnswer], [ChoiceAnswer], or [ScoreAnswer] values.
+	// Answers maps question names to [NoulAnswer], [ChoiceAnswer], [ScoreAnswer],
+	// or [BoxAnswer] values.
 	Answers map[string]Answer `json:"answers"`
 }
 
@@ -102,6 +103,9 @@ func (r *SystemOneResponse) Choices() map[string]ChoiceAnswer {
 // Probabilities maps are shared with Answers; do not mutate them.
 func (r *SystemOneResponse) Scores() map[string]ScoreAnswer { return answersOf[ScoreAnswer](r.Answers) }
 
+// Boxes returns the box answers keyed by question name.
+func (r *SystemOneResponse) Boxes() map[string]BoxAnswer { return answersOf[BoxAnswer](r.Answers) }
+
 func answersOf[T Answer](answers map[string]Answer) map[string]T {
 	out := map[string]T{}
 	for name, a := range answers {
@@ -112,7 +116,7 @@ func answersOf[T Answer](answers map[string]Answer) map[string]T {
 	return out
 }
 
-// Answer is one of [NoulAnswer], [ChoiceAnswer], or [ScoreAnswer].
+// Answer is one of [NoulAnswer], [ChoiceAnswer], [ScoreAnswer], or [BoxAnswer].
 type Answer interface{ isAnswer() }
 
 // NoulAnswer is the answer to a [Noul] question.
@@ -144,6 +148,24 @@ type ScoreAnswer struct {
 	Probabilities map[int]float64 `json:"probabilities"`
 }
 
+// BoxAnswer is the answer to a [Box] question.
+type BoxAnswer struct {
+	// Box holds the located box's edges.
+	Box BoxCoordinates `json:"box"`
+	// Confidence in the box, from 0 to 1, or nil when the model gives none.
+	Confidence *float64 `json:"confidence"`
+}
+
+// BoxCoordinates holds a box's edges as fractions from 0 to 1: Top and Bottom
+// of the image's height from its top edge, Left and Right of its width from
+// its left edge.
+type BoxCoordinates struct {
+	Top    float64 `json:"top"`
+	Bottom float64 `json:"bottom"`
+	Left   float64 `json:"left"`
+	Right  float64 `json:"right"`
+}
+
 // Usage reports token counts; a count the API omits or nulls is 0.
 type Usage struct {
 	InputTokens  int `json:"input_tokens"`
@@ -153,6 +175,7 @@ type Usage struct {
 func (NoulAnswer) isAnswer()   {}
 func (ChoiceAnswer) isAnswer() {}
 func (ScoreAnswer) isAnswer()  {}
+func (BoxAnswer) isAnswer()    {}
 
 // MarshalJSON emits the answer with "type":"noul".
 func (a NoulAnswer) MarshalJSON() ([]byte, error) {
@@ -188,6 +211,16 @@ func (a ScoreAnswer) MarshalJSON() ([]byte, error) {
 		Type string `json:"type"`
 		wire
 	}{"score", wire(a)})
+}
+
+// MarshalJSON emits the answer with "type":"box" and a null confidence when
+// Confidence is nil.
+func (a BoxAnswer) MarshalJSON() ([]byte, error) {
+	type wire BoxAnswer
+	return marshalJSON(struct {
+		Type string `json:"type"`
+		wire
+	}{"box", wire(a)})
 }
 
 // MarshalJSON emits model, answers (each with its type), and usage.
@@ -253,7 +286,7 @@ func decodeSystemOne(data []byte, onUnknown func(name, typ string)) (*SystemOneR
 				return nil, invalidAt(path + ".type")
 			}
 			switch typ {
-			case "noul", "choice", "score":
+			case "noul", "choice", "score", "box":
 				answers = append(answers, typedAnswer{m.key, typ, fields})
 			default:
 				if onUnknown != nil {
@@ -326,6 +359,8 @@ func decodeAnswer(path, typ string, f map[string]json.RawMessage) (Answer, error
 			}
 		}
 		return a, nil
+	case "box":
+		return decodeBox(path, f)
 	default:
 		var a ScoreAnswer
 		if a.Score, ok = decodeNumber(f["score"]); !ok {
@@ -366,6 +401,36 @@ func decodeAnswer(path, typ string, f map[string]json.RawMessage) (Answer, error
 		}
 		return a, nil
 	}
+}
+
+// decodeBox validates in field order, as Python does: box, its edges, then
+// confidence, which must be present but may be null.
+func decodeBox(path string, f map[string]json.RawMessage) (Answer, error) {
+	box, ok := decodeObject(f["box"])
+	if !ok {
+		return nil, invalidAt(path + ".box")
+	}
+	var a BoxAnswer
+	for _, edge := range [...]struct {
+		key string
+		dst *float64
+	}{{"top", &a.Box.Top}, {"bottom", &a.Box.Bottom}, {"left", &a.Box.Left}, {"right", &a.Box.Right}} {
+		if *edge.dst, ok = decodeNumber(box[edge.key]); !ok {
+			return nil, invalidAt(path + ".box." + edge.key)
+		}
+	}
+	raw, present := f["confidence"]
+	if !present {
+		return nil, invalidAt(path + ".confidence")
+	}
+	if firstByte(raw) != 'n' {
+		c, ok := decodeNumber(raw)
+		if !ok {
+			return nil, invalidAt(path + ".confidence")
+		}
+		a.Confidence = &c
+	}
+	return a, nil
 }
 
 func decodeString(raw json.RawMessage) (string, bool) {

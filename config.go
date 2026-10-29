@@ -135,11 +135,16 @@ func buildHTTPClient(supplied *http.Client) (*http.Client, *http.Transport) {
 		t = &http.Transport{
 			Proxy:                 http.ProxyFromEnvironment,
 			ForceAttemptHTTP2:     true,
-			MaxIdleConns:          100,
-			IdleConnTimeout:       90 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: time.Second,
 		}
 	}
+	// net/http keeps only two idle connections per host, so a burst of
+	// concurrent calls would reopen the rest, each with a new TLS handshake.
+	// All calls go to one host: keep every pooled connection, for 30s as the
+	// Python SDK does.
+	t.MaxIdleConns = maxIdleConns
+	t.MaxIdleConnsPerHost = maxIdleConns
+	t.IdleConnTimeout = idleConnTimeout
 	return &http.Client{Transport: redirectCapture{t}, CheckRedirect: noRedirect}, t
 }

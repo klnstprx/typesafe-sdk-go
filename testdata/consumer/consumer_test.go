@@ -105,7 +105,7 @@ func TestMetadataAccessorsAndSerialization(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer c.Close()
-	resp, err := c.SystemOne(context.Background(), map[string]any{"msg": "hi"}, typesafe.Questions{"spam": typesafe.Noul{}})
+	resp, err := c.SystemOne(context.Background(), map[string]any{"msg": "hi"}, typesafe.Questions{"spam": typesafe.Noul{Instructions: "Is this spam?"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +177,53 @@ func TestAPIErrorsTimeoutsAndMisuse(t *testing.T) {
 		t.Fatalf("err = %v", err)
 	}
 
-	if _, err := typesafe.SystemOneAs[spamResponse](context.Background(), c.client, nil, typesafe.Questions{"q": typesafe.Noul{}}); err == nil || !strings.HasPrefix(err.Error(), "typesafe: ") {
+	if _, err := typesafe.SystemOneAs[spamResponse](context.Background(), c.client, nil, typesafe.Questions{"q": typesafe.Noul{Instructions: "?"}}); err == nil || !strings.HasPrefix(err.Error(), "typesafe: ") {
 		t.Errorf("misuse err = %v", err)
+	}
+}
+
+// ticket is an application type holding images, as a consumer would.
+type ticket struct {
+	Note     string         `json:"note"`
+	Photo    typesafe.Image `json:"photo"`
+	Location *typesafe.Image
+}
+
+func TestImagesInApplicationTypes(t *testing.T) {
+	var parts []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(1 << 20); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		for name := range r.MultipartForm.File {
+			parts = append(parts, name)
+		}
+		_, _ = io.WriteString(w, `{"model":"jev-preview","usage":{},"answers":{"spot":{"type":"box","box":{"top":0,"bottom":1,"left":0,"right":1},"confidence":null}}}`)
+	}))
+	defer srv.Close()
+	c, err := typesafe.New(typesafe.WithAPIKey("sk-consumer"), typesafe.WithBaseURL(srv.URL))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	photo, err := typesafe.NewImage([]byte("\x89PNG\r\n\x1a\nphoto"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	location, err := typesafe.ImageFromBase64("/9j/bG9jYXRpb24=")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := c.SystemOne(context.Background(), ticket{Note: "chipped", Photo: photo, Location: &location},
+		typesafe.Questions{"spot": typesafe.Box{Instructions: fmt.Sprintf("The chip in %s", photo)}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(parts) != 2 {
+		t.Errorf("image parts = %v, want 2", parts)
+	}
+	if box, ok := resp.Boxes()["spot"]; !ok || box.Confidence != nil || box.Box.Bottom != 1 {
+		t.Errorf("Boxes() = %+v", resp.Boxes())
 	}
 }

@@ -37,3 +37,9 @@ const (
 	headerRetryAfter   = "Retry-After"
 	headerRetryAfterMS = "Retry-After-Ms"
 )
+
+// Connection pool settings for the SDK-owned transport.
+const (
+	maxIdleConns    = 100
+	idleConnTimeout = 30 * time.Second
+)

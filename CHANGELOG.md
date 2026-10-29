@@ -4,6 +4,42 @@ This project follows [Semantic Versioning](https://semver.org). From v1.0.0,
 the exported API of `github.com/klnstprx/typesafe-sdk-go` is stable: breaking
 changes require a new major version.
 
+## Unreleased
+
+### API
+
+- `Box` questions locate what their instructions describe in the request's
+  image. They are answered with `BoxAnswer` (edges in `BoxCoordinates` and a
+  `Confidence` that is nil when the model gives none) and selected with
+  `SystemOneResponse.Boxes()`. `Questions.UnmarshalJSON` decodes `"box"` into
+  `Box`, and box answers are no longer skipped as an unknown type.
+- Image assets: `Image`, created with `NewImage` or `ImageFromBase64`, is sent
+  with the request wherever it is placed in state, instructions, criteria, or
+  `WithExtraBody` values, as `multipart/form-data`. `WithImages` makes images
+  available to text that refers to them. In `SystemOne` and `SystemOneAs`, a
+  reference the call has no image for fails before any network I/O; Python
+  sends it as plain text, the JS SDK rejects it as Go does. `CreateSystemOne`
+  sends it as plain text, so proxies forward decoded requests unchanged.
+- `SystemOneRequest.Assets` and the `Asset` type carry the wire `"assets"`
+  field, so proxies no longer drop it when decoding and forwarding requests.
+  `Validate` rejects an empty map and blank placeholders.
+
+### Behavior
+
+- A `Noul` needs `Instructions` or at least one non-nil outcome in `Criteria`,
+  and a raw `"noul"` needs `"instructions"` or a non-null outcome; its
+  `"criteria"` must be an object or null. Such questions previously went out as
+  `{"type":"noul"}`. This matches Python SDK 0.7.3.
+- `Choice` and raw `"choice"` questions with empty criteria fail before any
+  network I/O, as in Python SDK 0.7.3.
+- The SDK-owned transport keeps up to 100 idle connections per host for 30s
+  (previously net/http's 2 per host for 90s), so bursts of concurrent calls no
+  longer reopen connections. Clients passed to `WithHTTPClient` are unchanged.
+- Parity fixtures now come from Python SDK 0.7.5 (commit `f36e6854`). Two new
+  documented differences: Go still rejects NaN and infinities in request
+  content (Python 0.7.4 sends them as strings or null), and Go does not
+  zstd-compress request bodies (Python 0.7.5 does by default).
+
 ## v1.0.2 — 2026-10-29
 
 ### Fixed

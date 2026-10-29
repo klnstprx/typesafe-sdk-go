@@ -180,3 +180,5 @@ func mustJSON(t *testing.T, v any) string {
 func noRetry() SharedOption { return WithRetryPolicy(RetryPolicy{}) }
 
 var bg = context.Background()
+
+func ptr[T any](v T) *T { return &v }

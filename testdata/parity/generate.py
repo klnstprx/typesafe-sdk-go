@@ -1,7 +1,7 @@
 """Generate Python SDK parity expectations for the Go SDK.
 
-Runs every case below through the official Python SDK, pinned to v0.7.2, and
-writes the inputs and observed results to python-0.7.2.json. The Go test
+Runs every case below through the official Python SDK, pinned to v0.7.5, and
+writes the inputs and observed results to python-0.7.5.json. The Go test
 parity_test.go replays the same inputs and compares; intentional differences
 live in differences.json.
 
@@ -14,10 +14,12 @@ function, which is stable for the pinned version.
 """
 
 import base64
+import contextlib
 import json
 import logging
 import math
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -25,11 +27,11 @@ from pathlib import Path
 import httpx2
 
 import typesafe_sdk
-from typesafe_sdk import Choice, Noul, RetryPolicy, Score, TypeSafeClient, TypeSafeError
+from typesafe_sdk import Box, Choice, Image, Noul, RetryPolicy, Score, TypeSafeClient, TypeSafeError
 from typesafe_sdk._core.errors import parse_retry_after
 
-PINNED_VERSION = "0.7.2"
-PINNED_COMMIT = "f078f1e208a0d885154dc758344ae4fce77ac168"
+PINNED_VERSION = "0.7.5"
+PINNED_COMMIT = "f36e68549ceca3191e5791e5f99ea1baa1a258b5"
 API_KEY = "sk-parity-0123456789"
 BASE_URL = "https://api.test"
 OUTPUT = Path(__file__).with_name(f"python-{PINNED_VERSION}.json")
@@ -119,6 +121,23 @@ RESPONSES = [
     ("score probability key", 200, {}, sysone('"s":{"type":"score","score":1,"confidence":1,"legend":{},"probabilities":{"1.5":1}}')),
     ("score probability null", 200, {}, sysone('"s":{"type":"score","score":1,"confidence":1,"legend":{},"probabilities":{"0":null}}')),
     ("first invalid answer in document order", 200, {}, sysone('"z":{"type":"noul"},"a":{"type":"noul"}')),
+    ("box ok", 200, {}, sysone('"b":{"type":"box","box":{"top":0.2,"bottom":0.66,"left":0.19,"right":0.68},"confidence":0.9}')),
+    ("box confidence null", 200, {}, sysone('"b":{"type":"box","box":{"top":0.2,"bottom":0.66,"left":0.19,"right":0.68},"confidence":null}')),
+    ("box integer coordinates", 200, {}, sysone('"b":{"type":"box","box":{"top":0,"bottom":1,"left":0,"right":1},"confidence":1}')),
+    ("box extra fields ignored", 200, {}, sysone('"b":{"type":"box","box":{"top":0,"bottom":1,"left":0,"right":1,"z":"x"},"confidence":null,"extra":1}')),
+    ("box confidence missing", 200, {}, sysone('"b":{"type":"box","box":{"top":0,"bottom":1,"left":0,"right":1}}')),
+    ("box confidence string", 200, {}, sysone('"b":{"type":"box","box":{"top":0,"bottom":1,"left":0,"right":1},"confidence":"0.9"}')),
+    ("box confidence bool", 200, {}, sysone('"b":{"type":"box","box":{"top":0,"bottom":1,"left":0,"right":1},"confidence":true}')),
+    ("box box missing", 200, {}, sysone('"b":{"type":"box","confidence":null}')),
+    ("box box null", 200, {}, sysone('"b":{"type":"box","box":null,"confidence":null}')),
+    ("box box array", 200, {}, sysone('"b":{"type":"box","box":[0,1,0,1],"confidence":null}')),
+    ("box coordinate missing", 200, {}, sysone('"b":{"type":"box","box":{"top":0,"bottom":1,"right":1},"confidence":null}')),
+    ("box coordinate string", 200, {}, sysone('"b":{"type":"box","box":{"top":0,"bottom":"1","left":0,"right":1},"confidence":null}')),
+    ("box coordinate null", 200, {}, sysone('"b":{"type":"box","box":{"top":0,"bottom":1,"left":null,"right":1},"confidence":null}')),
+    ("box coordinate bool", 200, {}, sysone('"b":{"type":"box","box":{"top":false,"bottom":1,"left":0,"right":1},"confidence":null}')),
+    ("box coordinates checked in field order", 200, {}, sysone('"b":{"type":"box","box":{"right":"x","top":"x"},"confidence":"x"}')),
+    ("box before confidence", 200, {}, sysone('"b":{"type":"box","confidence":"x","box":null}')),
+    ("box mixed with others", 200, {}, sysone('"n":{"type":"noul","noul":0.5},"b":{"type":"box","box":{"top":0,"bottom":1,"left":0,"right":1},"confidence":null}')),
     # API errors and message extraction.
     ("error string", 400, {"x-typesafe-request-id": "req-e"}, '{"error":"bad","message":"m"}'),
     ("error.message", 401, {}, '{"error":{"message":"nested"},"message":"m"}'),
@@ -158,6 +177,9 @@ MODELS = [
     ("models error", 401, {}, '{"error":"invalid key"}'),
 ]
 
+# A valid question for cases that exercise responses and retries rather than encoding.
+PROBE = {"q": Noul(instructions="?")}
+
 # Request cases: questions use {"kind": ..., fields} for typed questions and
 # {"raw": {...}} for dictionaries.
 NOUL = {"kind": "noul", "instructions": "Is this spam?"}
@@ -174,15 +196,30 @@ REQUESTS = [
     {"name": "noul structured", "state": "x", "questions": {"q": {"kind": "noul", "instructions": {"task": "t", "n": None}, "criteria": {"true": "yes", "false": ["no"]}}}},
     {"name": "noul criteria one side", "state": "x", "questions": {"q": {"kind": "noul", "criteria": {"true": "yes"}}}},
     {"name": "noul criteria explicit null", "state": "x", "questions": {"q": {"kind": "noul", "criteria": {"true": None, "false": "no"}}}},
+    {"name": "noul criteria all null", "state": "x", "questions": {"q": {"kind": "noul", "criteria": {"true": None, "false": None}}}},
+    {"name": "noul empty criteria", "state": "x", "questions": {"q": {"kind": "noul", "criteria": {}}}},
     {"name": "noul number instructions", "state": "x", "questions": {"q": {"kind": "noul", "instructions": 5}}},
     {"name": "choice", "state": "x", "questions": {"q": {"kind": "choice", "instructions": "Tone?", "criteria": {"calm": None, "angry": "upset", "x": {"a": 1}}}}},
     {"name": "choice empty criteria", "state": "x", "questions": {"q": {"kind": "choice", "criteria": {}}}},
     {"name": "score", "state": "x", "questions": {"q": {"kind": "score", "instructions": "Urgency?", "criteria": ["low", {"level": "mid"}, ["high"]]}}},
     {"name": "score empty criteria", "state": "x", "questions": {"urgency": {"kind": "score", "criteria": []}}},
-    {"name": "mixed questions", "state": "x", "questions": {"b": NOUL, "a": {"kind": "score", "criteria": ["x"]}, "c": {"raw": {"type": "noul"}}}},
+    {"name": "mixed questions", "state": "x", "questions": {"b": NOUL, "a": {"kind": "score", "criteria": ["x"]}, "c": {"raw": {"type": "noul", "instructions": "?"}}}},
     {"name": "no questions", "state": "x", "questions": {}},
     {"name": "raw verbatim", "state": "x", "questions": {"q": {"raw": {"type": "future", "extra": [None], "instructions": 5}}}},
+    {"name": "box empty", "state": "x", "questions": {"q": {"kind": "box"}}},
+    {"name": "box instructions", "state": "x", "questions": {"q": {"kind": "box", "instructions": "The dog"}}},
+    {"name": "box structured instructions", "state": "x", "questions": {"q": {"kind": "box", "instructions": {"find": ["dog", None]}}}},
+    {"name": "box empty instructions", "state": "x", "questions": {"q": {"kind": "box", "instructions": ""}}},
+    {"name": "box number instructions", "state": "x", "questions": {"q": {"kind": "box", "instructions": 5}}},
+    {"name": "raw box", "state": "x", "questions": {"q": {"raw": {"type": "box", "instructions": "The dog"}}}},
+    {"name": "raw box empty", "state": "x", "questions": {"q": {"raw": {"type": "box"}}}},
     {"name": "raw noul", "state": "x", "questions": {"q": {"raw": {"type": "noul", "instructions": "?"}}}},
+    {"name": "raw noul empty", "state": "x", "questions": {"q": {"raw": {"type": "noul"}}}},
+    {"name": "raw noul null instructions", "state": "x", "questions": {"q": {"raw": {"type": "noul", "instructions": None, "criteria": {"true": None}}}}},
+    {"name": "raw noul criteria only", "state": "x", "questions": {"q": {"raw": {"type": "noul", "criteria": {"false": "no"}}}}},
+    {"name": "raw noul string criteria", "state": "x", "questions": {"q": {"raw": {"type": "noul", "instructions": "?", "criteria": "yes"}}}},
+    {"name": "raw noul array criteria", "state": "x", "questions": {"q": {"raw": {"type": "noul", "instructions": "?", "criteria": ["yes"]}}}},
+    {"name": "raw noul null criteria", "state": "x", "questions": {"q": {"raw": {"type": "noul", "instructions": "?", "criteria": None}}}},
     {"name": "raw no type", "state": "x", "questions": {"x": {"raw": {"instructions": "?"}}}},
     {"name": "raw empty type", "state": "x", "questions": {"x": {"raw": {"type": ""}}}},
     {"name": "raw number type", "state": "x", "questions": {"x": {"raw": {"type": 1}}}},
@@ -196,7 +233,12 @@ REQUESTS = [
     {"name": "raw score empty object criteria", "state": "x", "questions": {"u": {"raw": {"type": "score", "criteria": {}}}}},
     {"name": "raw score null criteria", "state": "x", "questions": {"u": {"raw": {"type": "score", "criteria": None}}}},
     {"name": "raw score truthy criteria", "state": "x", "questions": {"u": {"raw": {"type": "score", "criteria": 1}}}},
+    {"name": "raw choice empty criteria", "state": "x", "questions": {"u": {"raw": {"type": "choice", "criteria": {}}}}},
+    {"name": "raw choice truthy criteria", "state": "x", "questions": {"u": {"raw": {"type": "choice", "criteria": "x"}}}},
     {"name": "raw choice null criteria", "state": "x", "questions": {"u": {"raw": {"type": "choice", "criteria": None}}}},
+    {"name": "non-finite state", "state": {"nan": math.nan, "inf": math.inf, "ninf": -math.inf}, "questions": {"q": NOUL}},
+    {"name": "non-finite instructions", "state": "x", "questions": {"q": {"kind": "noul", "instructions": {"n": math.nan}}}},
+    {"name": "non-finite extra body", "state": "x", "questions": {"q": NOUL}, "extra_body": {"temperature": math.inf}},
     {"name": "model override", "state": "x", "questions": {"q": NOUL}, "model": "jev-2"},
     {"name": "client model", "state": "x", "questions": {"q": NOUL}, "client_model": "jev-client"},
     {"name": "extra body", "state": "x", "questions": {"q": NOUL}, "model": "jev-2", "extra_body": {"model": "jev-extra", "trace": None, "debug": True}},
@@ -204,6 +246,50 @@ REQUESTS = [
     {"name": "headers", "state": "x", "questions": {"q": NOUL},
      "client_headers": {"X-Team": "a", "X-Shared": "client", "Authorization": "Bearer stolen", "X-TypeSafe-Retry-Count": "99"},
      "headers": {"x-shared": "call", "Accept": "text/html", "Content-Type": "text/plain", "x-typesafe-retry-count": "7"}},
+]
+
+# Image cases. Images come from IMAGES by index: {"$image": i} places image i
+# in content, {"$text": "... {i} ..."} formats its reference into text, and
+# "attach" lists images attached to the call. Each case gets fresh images.
+IMAGES = [b"\x89PNG\r\n\x1a\npng-0", b"\xff\xd8\xffjpeg-1", b"GIF89a-2"]
+IMAGE_REQUESTS = [
+    {"name": "image state", "state": {"$image": 0}, "questions": {"q": NOUL}},
+    {"name": "image in object state", "state": {"photo": {"$image": 0}, "note": "x"}, "questions": {"q": NOUL}},
+    {"name": "image in instructions", "state": "x", "questions": {"q": {"kind": "noul", "instructions": {"$image": 0}}}},
+    {"name": "image in noul criteria", "state": "x", "questions": {"q": {"kind": "noul", "instructions": "?", "criteria": {"true": {"$image": 0}}}}},
+    {"name": "image in choice criteria", "state": "x", "questions": {"q": {"kind": "choice", "criteria": {"a": {"$image": 0}, "b": None}}}},
+    {"name": "image in score criteria", "state": "x", "questions": {"q": {"kind": "score", "criteria": [{"$image": 0}, "low"]}}},
+    {"name": "image in raw question", "state": "x", "questions": {"q": {"raw": {"type": "noul", "instructions": {"$image": 0}}}}},
+    {"name": "box on image", "state": {"$image": 1}, "questions": {"q": {"kind": "box", "instructions": {"$image": 0}}}},
+    {"name": "same image twice", "state": [{"$image": 0}, {"$image": 0}], "questions": {"q": NOUL}},
+    {"name": "images in order of appearance", "state": [{"$image": 1}, {"$image": 0}], "questions": {"q": NOUL}},
+    {"name": "image content types", "state": [{"$image": 0}, {"$image": 1}, {"$image": 2}], "questions": {"q": NOUL}},
+    {"name": "image in extra body", "state": "x", "questions": {"q": NOUL}, "extra_body": {"context": {"$image": 0}}},
+    {"name": "text reference attached", "state": {"$text": "Compare {0} with the listing."}, "questions": {"q": NOUL}, "attach": [0]},
+    {"name": "text reference in instructions attached", "state": "x", "questions": {"q": {"kind": "noul", "instructions": {"$text": "Is {0} damaged?"}}}, "attach": [0]},
+    {"name": "text reference also placed", "state": {"a": {"$image": 0}, "b": {"$text": "see {0}"}}, "questions": {"q": NOUL}},
+    {"name": "text reference not attached", "state": {"$text": "Compare {0}."}, "questions": {"q": NOUL}},
+    {"name": "lookalike reference", "state": "see <image:0123456789abcdef0123456789abcdef>", "questions": {"q": NOUL}},
+    {"name": "attached but unreferenced", "state": "x", "questions": {"q": NOUL}, "attach": [0]},
+    {"name": "extra body assets override", "state": {"$image": 0}, "questions": {"q": NOUL},
+     "extra_body": {"assets": {"p": {"type": "image", "format": "png", "data_base64": "AA=="}}}},
+]
+
+# Image constructors: "bytes" values are base64 of the file bytes, "base64"
+# values are passed to Image.from_base64 as is. Each image is sent as state.
+IMAGE_INPUTS = [
+    {"name": "bytes", "kind": "bytes", "value": base64.b64encode(IMAGES[0]).decode()},
+    {"name": "bytes empty", "kind": "bytes", "value": ""},
+    {"name": "base64", "kind": "base64", "value": base64.b64encode(IMAGES[1]).decode()},
+    {"name": "base64 wrapped", "kind": "base64", "value": " " + "\r\n".join(re.findall(".{1,4}", base64.b64encode(IMAGES[2]).decode())) + "\t\n"},
+    {"name": "base64 empty", "kind": "base64", "value": ""},
+    {"name": "base64 whitespace", "kind": "base64", "value": " \n\t"},
+    {"name": "base64 non-ascii", "kind": "base64", "value": "aé=="},
+    {"name": "base64 invalid character", "kind": "base64", "value": "ab$d"},
+    {"name": "base64 url alphabet", "kind": "base64", "value": "ab-_"},
+    {"name": "base64 missing padding", "kind": "base64", "value": "abc"},
+    {"name": "base64 data after padding", "kind": "base64", "value": "ab==cd=="},
+    {"name": "base64 zero bytes", "kind": "base64", "value": "===="},
 ]
 
 MODELS_REQUESTS = [
@@ -265,11 +351,14 @@ logging.getLogger("typesafe_sdk").addHandler(CAPTURE)
 
 
 def client(handler, *, retry: RetryPolicy | None = None, **kwargs) -> TypeSafeClient:
+    # Go has no zstd encoder (see the "zstd-compression" note); disabling compression keeps request bodies comparable and
+    # the fixture independent of whether this Python has zstd.
     return TypeSafeClient(
         api_key=API_KEY,
         base_url=BASE_URL,
         transport=httpx2.MockTransport(handler),
         retry=retry or RetryPolicy(max_retries=0),
+        compression=False,
         **kwargs,
     )
 
@@ -302,7 +391,7 @@ def describe_system_one(resp) -> dict:
         "model": resp.model,
         "usage": {"input_tokens": resp.usage.input_tokens, "output_tokens": resp.usage.output_tokens},
         "answers": {name: answer.model_dump(mode="json") for name, answer in resp.answers.items()},
-        "groups": {"nouls": sorted(resp.nouls), "choices": sorted(resp.choices), "scores": sorted(resp.scores)},
+        "groups": {"nouls": sorted(resp.nouls), "choices": sorted(resp.choices), "scores": sorted(resp.scores), "boxes": sorted(resp.boxes)},
         "request_id": request_id(resp),
     }
 
@@ -315,7 +404,7 @@ def run_response(endpoint: str, status: int, headers: dict, body: bytes) -> dict
             resp = c.models.list()
             result = {"models": [m.model_dump(mode="json") for m in resp.models], "request_id": request_id(resp)}
         else:
-            result = describe_system_one(c.system_one("x", {"q": Noul()}))
+            result = describe_system_one(c.system_one("x", PROBE))
         out = {"ok": True, "result": result}
     except typesafe_sdk.TypeSafeError as error:
         out = {"ok": False, "error": describe_error(error)}
@@ -327,19 +416,63 @@ def question(spec: dict):
     if "raw" in spec:
         return spec["raw"]
     fields = {k: v for k, v in spec.items() if k != "kind"}
-    return {"noul": Noul, "choice": Choice, "score": Score}[spec["kind"]](**fields)
+    return {"noul": Noul, "choice": Choice, "score": Score, "box": Box}[spec["kind"]](**fields)
 
 
 def describe_request(req: httpx2.Request) -> dict:
-    return {
-        "method": req.method,
-        "path": req.url.path,
-        "body": json.loads(req.content) if req.content else None,
-        "headers": {k.lower(): v for k, v in req.headers.items() if k.lower() not in IGNORED_REQUEST_HEADERS},
-    }
+    headers = {k.lower(): v for k, v in req.headers.items() if k.lower() not in IGNORED_REQUEST_HEADERS}
+    out = {"method": req.method, "path": req.url.path, "headers": headers}
+    boundary = re.fullmatch(r"multipart/form-data; boundary=(\S+)", headers.get("content-type", ""))
+    if boundary:
+        # The boundary is random; the parts are described instead.
+        headers["content-type"] = "multipart/form-data; boundary=BOUNDARY"
+        out["body"], out["parts"] = describe_multipart(req.content, boundary[1].encode())
+    else:
+        out["body"] = json.loads(req.content) if req.content else None
+    return out
 
 
-def run_request(case: dict, endpoint: str) -> dict:
+def describe_multipart(content: bytes, boundary: bytes) -> tuple[object, list[dict]]:
+    """The JSON of the "request" part and every part's headers, with image parts' content as an IMAGES index."""
+    delimiter = b"\r\n--" + boundary
+    sections = (b"\r\n" + content).split(delimiter)
+    if sections[0] != b"" or sections[-1] != b"--\r\n":
+        sys.exit(f"unexpected multipart framing: {content[:80]!r}")
+    request, parts = None, []
+    for section in sections[1:-1]:
+        head, _, data = section.removeprefix(b"\r\n").partition(b"\r\n\r\n")
+        part = dict(line.decode().lower().split(": ", 1) for line in head.split(b"\r\n"))
+        if part.get("content-disposition") == 'form-data; name="request"':
+            request = json.loads(data)
+        else:
+            part["image"] = IMAGES.index(data)
+        parts.append(part)
+    return request, parts
+
+
+def revive(value, images: list):
+    """Replace {"$image": i} with images[i] and {"$text": template} with the formatted text."""
+    if isinstance(value, dict):
+        if set(value) == {"$image"}:
+            return images[value["$image"]]
+        if set(value) == {"$text"}:
+            return value["$text"].format(*images)
+        return {k: revive(v, images) for k, v in value.items()}
+    if isinstance(value, list):
+        return [revive(v, images) for v in value]
+    return value
+
+
+def unreference(result: dict, images: list) -> dict:
+    """Replace each image's random reference with <image:index>, wherever it appears."""
+    text = json.dumps(result)
+    for i, image in enumerate(images):
+        text = text.replace(str(image), f"<image:{i}>")
+    return json.loads(text)
+
+
+def run_request(case: dict, endpoint: str, images: list | None = None) -> dict:
+    images = images if images is not None else [Image(data) for data in IMAGES]
     sent: list[httpx2.Request] = []
 
     def handler(req: httpx2.Request) -> httpx2.Response:
@@ -351,11 +484,24 @@ def run_request(case: dict, endpoint: str) -> dict:
         if endpoint == "models":
             c.models.list(extra_headers=case.get("headers"))
         else:
-            questions = {name: question(spec) for name, spec in case["questions"].items()}
-            c.system_one(case["state"], questions, model=case.get("model"), extra_body=case.get("extra_body"), extra_headers=case.get("headers"))
-        return {"ok": True, "request": describe_request(sent[0])}
+            questions = {name: question(revive(spec, images)) for name, spec in case["questions"].items()}
+            attach = c.attach_assets([images[i] for i in case["attach"]]) if "attach" in case else contextlib.nullcontext()
+            with attach:
+                c.system_one(revive(case["state"], images), questions, model=case.get("model"), extra_body=revive(case.get("extra_body"), images),
+                             extra_headers=case.get("headers"))
+        result = {"ok": True, "request": describe_request(sent[0])}
     except Exception as error:  # noqa: BLE001 - pydantic construction errors are part of the observed behavior.
-        return {"ok": False, "error": {"class": type(error).__name__, "message": str(error).splitlines()[0]}, "requests_sent": len(sent)}
+        result = {"ok": False, "error": {"class": type(error).__name__, "message": str(error).splitlines()[0]}, "requests_sent": len(sent)}
+    return unreference(result, images)
+
+
+def run_image_input(case: dict) -> dict:
+    try:
+        image = Image(base64.b64decode(case["value"])) if case["kind"] == "bytes" else Image.from_base64(case["value"])
+    except TypeSafeError as error:
+        return {"ok": False, "error": {"class": type(error).__name__, "message": str(error)}, "requests_sent": 0}
+    images = [image]
+    return run_request({"state": {"$image": 0}, "questions": {"q": NOUL}}, "systemone", images)
 
 
 def run_retry(case: dict) -> dict:
@@ -375,7 +521,7 @@ def run_retry(case: dict) -> dict:
         policy["http_statuses"] = set(case["http_statuses"])
     c = client(handler, retry=RetryPolicy(**policy), headers=case.get("headers"))
     try:
-        c.system_one("x", {"q": Noul()})
+        c.system_one("x", PROBE)
         outcome = {"ok": True}
     except typesafe_sdk.TypeSafeError as error:
         outcome = {"ok": False, "error": describe_error(error)}
@@ -427,7 +573,7 @@ def main() -> None:
         responses.append({"name": name, "endpoint": "models", "status": status, "headers": headers, "body": body,
                           "python": run_response("models", status, headers, body.encode())})
 
-    requests = [{**case, "endpoint": "systemone", "python": run_request(case, "systemone")} for case in REQUESTS]
+    requests = [{**case, "endpoint": "systemone", "python": run_request(case, "systemone")} for case in REQUESTS + IMAGE_REQUESTS]
     requests += [{**case, "endpoint": "models", "python": run_request(case, "models")} for case in MODELS_REQUESTS]
 
     fixture = {
@@ -438,6 +584,8 @@ def main() -> None:
         "ignored_request_headers": sorted(IGNORED_REQUEST_HEADERS),
         "responses": responses,
         "requests": requests,
+        "images": [base64.b64encode(data).decode() for data in IMAGES],
+        "image_inputs": [{**case, "python": run_image_input(case)} for case in IMAGE_INPUTS],
         "retries": [{**case, "python": run_retry(case)} for case in RETRIES],
         "retry_after": [{"name": json.dumps(h, sort_keys=True), "headers": h, "python_ms": parse_retry_after(httpx2.Headers(h))} for h in RETRY_AFTER],
         "api_keys": [{"name": json.dumps(k), "key": k, "python": run_api_key(k)} for k in API_KEYS],

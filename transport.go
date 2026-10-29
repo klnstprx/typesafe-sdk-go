@@ -47,8 +47,8 @@ func resolveCallOptions(opts []CallOption) *callOptions {
 }
 
 // prepare merges headers, resolves the timeout and retry policy, and validates
-// them before any network I/O.
-func (c *Client) prepare(method, path string, body []byte, o *callOptions) (*request, error) {
+// them before any network I/O. A non-nil body is sent with contentType.
+func (c *Client) prepare(method, path string, body []byte, contentType string, o *callOptions) (*request, error) {
 	if c.closed.Load() {
 		return nil, errClosed
 	}
@@ -76,7 +76,7 @@ func (c *Client) prepare(method, path string, body []byte, o *callOptions) (*req
 	header.Set(headerRuntime, runtimeValue)
 	header.Del("Content-Type")
 	if body != nil {
-		header.Set("Content-Type", jsonContentType)
+		header.Set("Content-Type", contentType)
 	}
 
 	u := c.cfg.baseURL.JoinPath(path)

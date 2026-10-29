@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"maps"
 	"net/http"
+	"slices"
 	"sync/atomic"
 	"time"
 )
@@ -56,6 +57,7 @@ type callOptions struct {
 	retry     *RetryPolicy
 	headers   http.Header
 	extraBody map[string]any
+	images    []Image
 }
 
 type clientOption func(*clientOptions)
@@ -177,6 +179,22 @@ func WithExtraBody(fields map[string]any) CallOption {
 			o.extraBody = make(map[string]any, len(fields))
 		}
 		maps.Copy(o.extraBody, fields)
+	})
+}
+
+// WithImages makes images available to a SystemOne call whose text refers to
+// them, such as fmt.Sprintf("Is %s damaged?", img). Each image whose reference
+// appears in the request is sent once; the others are ignored. Images placed
+// directly in state, questions, or [WithExtraBody] values need no option, but
+// those reachable only through unexported fields or custom marshalers do.
+// Models.List rejects it.
+func WithImages(images ...Image) CallOption {
+	images = slices.Clone(images)
+	return callOption(func(o *callOptions) {
+		if o.images == nil {
+			o.images = []Image{} // non-nil, so Models.List also rejects WithImages()
+		}
+		o.images = append(o.images, images...)
 	})
 }
 

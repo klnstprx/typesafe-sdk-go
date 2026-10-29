@@ -23,7 +23,7 @@ func (qs Questions) MarshalJSON() ([]byte, error) {
 	return marshalJSON(wire)
 }
 
-// UnmarshalJSON decodes known types into Noul, Choice, and Score values.
+// UnmarshalJSON decodes known types into Noul, Choice, Score, and Box values.
 // Unknown types become RawQuestion values. Unknown fields on known types are
 // ignored. Structured content uses json.Number so large integers survive a
 // decode/encode round trip. Existing encoding rules validate decoded questions.
@@ -48,6 +48,8 @@ func (qs *Questions) UnmarshalJSON(data []byte) error {
 			q = &Choice{}
 		case "score":
 			q = &Score{}
+		case "box":
+			q = &Box{}
 		default:
 			q = &RawQuestion{}
 		}
@@ -63,6 +65,8 @@ func (qs *Questions) UnmarshalJSON(data []byte) error {
 			q = *v
 		case *Score:
 			q = *v
+		case *Box:
+			q = *v
 		case *RawQuestion:
 			q = *v
 		}
@@ -75,15 +79,15 @@ func (qs *Questions) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Question is one of [Noul], [Choice], [Score], or [RawQuestion].
+// Question is one of [Noul], [Choice], [Score], [Box], or [RawQuestion].
 //
 // Content fields typed any (instructions and criteria descriptions) accept any
 // value that encodes to a JSON string, object, or array: a string, a struct, a
 // map, a slice, or a [json.RawMessage].
 type Question interface{ isQuestion() }
 
-// Noul is a yes/no question or statement. See
-// https://docs.typesafe.ai/primitives/noul.
+// Noul is a yes/no question or statement. It needs Instructions or at least
+// one described outcome in Criteria. See https://docs.typesafe.ai/primitives/noul.
 type Noul struct {
 	// Instructions is the question or statement; nil omits it.
 	Instructions any
@@ -104,7 +108,8 @@ type Choice struct {
 	// Instructions describes the decision; nil omits it.
 	Instructions any
 	// Criteria maps each label to its description. A nil description is sent
-	// as JSON null and leaves the label undescribed. Criteria is required.
+	// as JSON null and leaves the label undescribed. Criteria is required and
+	// must be non-empty.
 	Criteria map[string]any
 }
 
@@ -118,15 +123,26 @@ type Score struct {
 	Criteria []any
 }
 
+// Box locates what Instructions describes in the request's image and is
+// answered with a [BoxAnswer]. The API requires the
+// TypeSafe-Danger-Zone-Images: true header for box questions; send it with
+// [WithHeader]. Box{} is valid.
+type Box struct {
+	// Instructions describes what to locate; nil omits it.
+	Instructions any
+}
+
 // RawQuestion is a question in its wire form, such as
 // RawQuestion{"type": "noul", "instructions": "Is this spam?"}. It must have a
-// non-empty string "type", and "criteria" when the type is "choice" or "score".
-// Otherwise it is sent unchanged.
+// non-empty string "type", and non-empty "criteria" when the type is "choice"
+// or "score". A "noul" needs "instructions" or a non-null outcome in its
+// "criteria", which must be an object or null. Otherwise it is sent unchanged.
 type RawQuestion map[string]any
 
 func (Noul) isQuestion()        {}
 func (Choice) isQuestion()      {}
 func (Score) isQuestion()       {}
+func (Box) isQuestion()         {}
 func (RawQuestion) isQuestion() {}
 
 type questionWire struct {
@@ -135,16 +151,20 @@ type questionWire struct {
 	Criteria     json.RawMessage `json:"criteria,omitempty"`
 }
 
-// MarshalJSON emits {"type":"noul"} followed by the non-nil fields.
+// MarshalJSON emits {"type":"noul"} followed by the non-nil fields. It fails
+// when neither Instructions nor a Criteria outcome is set.
 func (q Noul) MarshalJSON() ([]byte, error) { return q.encode("") }
 
 // MarshalJSON emits {"type":"choice"} followed by the non-nil fields. It fails
-// when Criteria is nil.
+// when Criteria is empty.
 func (q Choice) MarshalJSON() ([]byte, error) { return q.encode("") }
 
 // MarshalJSON emits {"type":"score"} followed by the non-nil fields. It fails
 // when Criteria is empty.
 func (q Score) MarshalJSON() ([]byte, error) { return q.encode("") }
+
+// MarshalJSON emits {"type":"box"} followed by Instructions if non-nil.
+func (q Box) MarshalJSON() ([]byte, error) { return q.encode("") }
 
 // MarshalJSON emits the non-nil outcomes as "true" and "false".
 func (c NoulCriteria) MarshalJSON() ([]byte, error) { return c.encode("noul criteria") }
@@ -170,6 +190,9 @@ func (q Noul) encode(quotedName string) ([]byte, error) {
 			return nil, err
 		}
 	}
+	if q.Instructions == nil && (q.Criteria == nil || q.Criteria.True == nil && q.Criteria.False == nil) {
+		return nil, noulEmptyError(label)
+	}
 	return marshalJSON(w)
 }
 
@@ -192,6 +215,9 @@ func (q Choice) encode(quotedName string) ([]byte, error) {
 	label := questionLabel("choice", quotedName)
 	if q.Criteria == nil {
 		return nil, fmt.Errorf(`typesafe: %s requires "criteria"`, label)
+	}
+	if len(q.Criteria) == 0 {
+		return nil, choiceCriteriaError(label)
 	}
 	w := questionWire{Type: "choice"}
 	var err error
@@ -237,8 +263,25 @@ func (q Score) encode(quotedName string) ([]byte, error) {
 	return marshalJSON(w)
 }
 
+func (q Box) encode(quotedName string) ([]byte, error) {
+	w := questionWire{Type: "box"}
+	var err error
+	if w.Instructions, err = encodeOptional(q.Instructions, questionLabel("box", quotedName)+" instructions"); err != nil {
+		return nil, err
+	}
+	return marshalJSON(w)
+}
+
 func scoreCriteriaError(label string) error {
 	return fmt.Errorf("typesafe: %s has no criteria; at least one score is required", label)
+}
+
+func choiceCriteriaError(label string) error {
+	return fmt.Errorf("typesafe: %s has no criteria; at least one choice is required", label)
+}
+
+func noulEmptyError(label string) error {
+	return fmt.Errorf("typesafe: %s has neither instructions nor criteria; at least one is required", label)
 }
 
 func encodeOptional(v any, what string) (json.RawMessage, error) {
@@ -286,6 +329,12 @@ func encodeQuestion(name string, q Question) ([]byte, error) {
 		if v != nil {
 			return v.encode(quoted)
 		}
+	case Box:
+		return v.encode(quoted)
+	case *Box:
+		if v != nil {
+			return v.encode(quoted)
+		}
 	case RawQuestion:
 		return encodeRaw(name, v)
 	case *RawQuestion:
@@ -293,21 +342,29 @@ func encodeQuestion(name string, q Question) ([]byte, error) {
 			return encodeRaw(name, *v)
 		}
 	}
-	return nil, fmt.Errorf(`typesafe: question %q must be a Noul, Choice, Score, or RawQuestion with a non-empty string "type"`, name)
+	return nil, fmt.Errorf(`typesafe: question %q must be a Noul, Choice, Score, Box, or RawQuestion with a non-empty string "type"`, name)
 }
 
 func encodeRaw(name string, q RawQuestion) ([]byte, error) {
 	typ, ok := q["type"].(string)
 	if !ok || typ == "" {
-		return nil, fmt.Errorf(`typesafe: question %q must be a Noul, Choice, Score, or RawQuestion with a non-empty string "type"`, name)
+		return nil, fmt.Errorf(`typesafe: question %q must be a Noul, Choice, Score, Box, or RawQuestion with a non-empty string "type"`, name)
 	}
 	if typ == "choice" || typ == "score" {
 		criteria, ok := q["criteria"]
 		if !ok {
 			return nil, fmt.Errorf(`typesafe: question %q requires "criteria"`, name)
 		}
-		if typ == "score" && isEmpty(criteria) {
-			return nil, scoreCriteriaError("score question " + strconv.Quote(name))
+		if isEmpty(criteria) {
+			if typ == "score" {
+				return nil, scoreCriteriaError("score question " + strconv.Quote(name))
+			}
+			return nil, choiceCriteriaError("choice question " + strconv.Quote(name))
+		}
+	}
+	if typ == "noul" {
+		if err := validateRawNoul(name, q); err != nil {
+			return nil, err
 		}
 	}
 	b, err := marshalJSON(map[string]any(q))
@@ -315,6 +372,30 @@ func encodeRaw(name string, q RawQuestion) ([]byte, error) {
 		return nil, fmt.Errorf("typesafe: the request body could not be encoded as JSON: question %q: %w", name, err)
 	}
 	return b, nil
+}
+
+// validateRawNoul applies the Noul rules to a raw noul: "criteria", unless
+// null, must be an object, and "instructions" or a non-null outcome is needed.
+func validateRawNoul(name string, q RawQuestion) error {
+	label := "noul question " + strconv.Quote(name)
+	described := false
+	if criteria := q["criteria"]; criteria != nil {
+		b, err := marshalJSON(criteria)
+		if err != nil {
+			return fmt.Errorf("typesafe: the request body could not be encoded as JSON: question %q: %w", name, err)
+		}
+		var outcomes map[string]json.RawMessage // stays nil for JSON null
+		if json.Unmarshal(b, &outcomes) != nil {
+			return fmt.Errorf("typesafe: %s criteria must be an object", label)
+		}
+		for _, v := range outcomes {
+			described = described || string(v) != "null"
+		}
+	}
+	if q["instructions"] == nil && !described {
+		return noulEmptyError(label)
+	}
+	return nil
 }
 
 // isEmpty mirrors Python truthiness for a criteria value: nil, false, numeric

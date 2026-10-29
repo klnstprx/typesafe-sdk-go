@@ -13,6 +13,7 @@ func TestSystemOneRequestRoundTrip(t *testing.T) {
 		"n":{"type":"noul","instructions":{"id":9007199254740993},"criteria":{"true":["yes"],"false":"no"}},
 		"c":{"type":"choice","criteria":{"a":null,"b":{"id":9007199254740993}}},
 		"s":{"type":"score","instructions":["rate"],"criteria":["low",{"id":9007199254740993}]},
+		"b":{"type":"box","instructions":{"id":9007199254740993}},
 		"future":{"type":"future","value":9007199254740993}
 	}}`
 	var req SystemOneRequest
@@ -22,7 +23,7 @@ func TestSystemOneRequestRoundTrip(t *testing.T) {
 	if err := req.Validate(); err != nil {
 		t.Fatal(err)
 	}
-	for name, want := range map[string]Question{"n": Noul{}, "c": Choice{}, "s": Score{}, "future": RawQuestion{}} {
+	for name, want := range map[string]Question{"n": Noul{}, "c": Choice{}, "s": Score{}, "b": Box{}, "future": RawQuestion{}} {
 		if reflect.TypeOf(req.Questions[name]) != reflect.TypeOf(want) {
 			t.Fatalf("%s decoded as %T", name, req.Questions[name])
 		}
@@ -48,8 +49,9 @@ func TestSystemOneRequestRoundTrip(t *testing.T) {
 
 func TestRequestValidationBeforeDispatch(t *testing.T) {
 	for _, wire := range []string{
-		`{}`, `{"state":null,"questions":{"q":{"type":"noul"}}}`,
-		`{"state":42,"questions":{"q":{"type":"noul"}}}`,
+		`{}`, `{"state":null,"questions":{"q":{"type":"noul","instructions":"?"}}}`,
+		`{"state":42,"questions":{"q":{"type":"noul","instructions":"?"}}}`,
+		`{"state":"x","questions":{"q":{"type":"noul"}}}`,
 		`{"state":"x","questions":[]}`, `{"state":"x","questions":{}}`,
 		`{"state":"x","questions":{"q":null}}`,
 		`{"state":"x","questions":{"q":{"type":42}}}`,
@@ -57,6 +59,7 @@ func TestRequestValidationBeforeDispatch(t *testing.T) {
 		`{"state":"x","questions":{"q":{"type":"noul","criteria":{"true":false}}}}`,
 		`{"state":"x","questions":{"q":{"type":"choice"}}}`,
 		`{"state":"x","questions":{"q":{"type":"choice","criteria":[]}}}`,
+		`{"state":"x","questions":{"q":{"type":"choice","criteria":{}}}}`,
 		`{"state":"x","questions":{"q":{"type":"score","criteria":[]}}}`,
 		`{"state":"x","questions":{"q":{"type":"score","criteria":[null]}}}`,
 		`{"state":"x","questions":{"q":{"type":"score","criteria":[1]}}}`,
@@ -83,7 +86,7 @@ func TestRequestValidationBeforeDispatch(t *testing.T) {
 }
 
 func TestRequestUnknownFields(t *testing.T) {
-	const wire = `{"state":"x","extra":true,"questions":{"q":{"type":"noul","extra":true}}}`
+	const wire = `{"state":"x","extra":true,"questions":{"q":{"type":"noul","instructions":"?","extra":true}}}`
 	var req SystemOneRequest
 	if err := json.Unmarshal([]byte(wire), &req); err != nil {
 		t.Fatal(err)
@@ -93,7 +96,7 @@ func TestRequestUnknownFields(t *testing.T) {
 	if err := d.Decode(&req); err == nil {
 		t.Fatal("strict envelope accepted extra field")
 	}
-	d = json.NewDecoder(strings.NewReader(`{"state":"x","questions":{"q":{"type":"noul","extra":true}}}`))
+	d = json.NewDecoder(strings.NewReader(`{"state":"x","questions":{"q":{"type":"noul","instructions":"?","extra":true}}}`))
 	d.DisallowUnknownFields()
 	if err := d.Decode(&req); err != nil {
 		t.Fatal(err)
