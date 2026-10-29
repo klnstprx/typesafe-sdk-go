@@ -4,7 +4,7 @@ This project follows [Semantic Versioning](https://semver.org). From v1.0.0,
 the exported API of `github.com/klnstprx/typesafe-sdk-go` is stable: breaking
 changes require a new major version.
 
-## Unreleased
+## v1.0.2 — 2026-10-29
 
 ### Fixed
 
